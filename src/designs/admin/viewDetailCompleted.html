@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topre - Detalle de Ensamble (Terminado)</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la fuente Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Componente: Encabezado (Header) -->
+    <header class="bg-white shadow-sm">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <div class="flex-shrink-0 flex items-center">
+            <h1 class="text-3xl font-bold text-sky-800">Topre</h1>
+            <span class="ml-4 text-gray-500 font-medium">Portal de Mantenimiento</span>
+          </div>
+          
+          <!-- Info de Usuario (Hardcodeada) -->
+          <div class="flex items-center">
+            <span class="text-gray-700 mr-3">
+              Hola, <span class="font-medium">Carlos V.</span>
+            </span>
+            <!-- Icono de Usuario -->
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <button
+              class="ml-4 text-sm font-medium text-gray-600 hover:text-sky-700"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      
+        <!-- Link de Volver -->
+        <div class="mb-4">
+            <a href="#" class="text-sm font-medium text-sky-700 hover:text-sky-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5 mr-1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Volver al Dashboard
+            </a>
+        </div>
+
+        <!-- Layout de 3 Columnas (2 para contenido, 1 para sidebar) -->
+        <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+            
+            <!-- Columna Principal (Proceso) -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Tarjeta de Información General -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="p-5">
+                        <!-- Badges de Tipo y Estado -->
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                Tipo: QC
+                            </span>
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Estado: Completado
+                            </span>
+                        </div>
+                        <h2 class="mt-3 text-2xl font-semibold text-gray-800">
+                            Ensamble: T/T-57-59 Y 6 / 3W0
+                        </h2>
+                        <p class="text-sm text-gray-500">Número: 63210/610-3W0-A000-H1</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta del Proceso (Checklist) -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="p-5">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-5">
+                            Historial del Proceso (Tipo: QC)
+                        </h3>
+
+                        <!-- Lista de Pasos (Stepper) -->
+                        <ol class="relative border-l border-gray-200">                  
+                            
+                            <!-- Paso 1: Completado -->
+                            <li class="mb-10 ml-8">            
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-gray-900">
+                                    Recepción de Piezas 
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">Completado</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Completado el 2024-10-02</time>
+                                <p class="mb-4 text-base font-normal text-gray-500">Recepción y registro de 50 unidades del modelo 3W0.</p>
+                            </li>
+                            
+                            <!-- Paso 2: Completado -->
+                            <li class="mb-10 ml-8">            
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-gray-900">
+                                    Inspección Visual 
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">Completado</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Completado el 2024-10-03</time>
+                                <p class="text-base font-normal text-gray-500">Verificación de acabados, sin golpes ni rayaduras en lote.</p>
+                            </li>
+                            
+                            <!-- Paso 3: Completado (CON EVIDENCIAS) -->
+                            <li class="mb-10 ml-8">
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-gray-900">
+                                    Medición Dimensional (CMM)
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">Completado</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Completado el 2024-10-04</time>
+                                <p class="text-base font-normal text-gray-500">Medición de puntos críticos de control (PCC) en máquina CMM. 50/50 piezas medidas.</p>
+                                
+                                <!-- Apartado de Evidencia (Leído, no para subir) -->
+                                <div class="mt-4 p-4 bg-gray-50 rounded-lg border">
+                                    <h5 class="block text-sm font-medium text-gray-700 mb-2">Evidencias Adjuntas:</h5>
+                                    <ul class="space-y-2">
+                                        <!-- Evidencia 1 -->
+                                        <li class="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-sky-600 mr-2 flex-shrink-0">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                            </svg>
+                                            <a href="#" class="text-sm font-medium text-sky-700 hover:underline truncate">Reporte_Final_CMM_Lote_A.pdf</a>
+                                        </li>
+                                        <!-- Evidencia 2 -->
+                                        <li class="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-sky-600 mr-2 flex-shrink-0">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                            </svg>
+                                            <a href="#" class="text-sm font-medium text-sky-700 hover:underline truncate">Foto_Set_OK_Piezas.jpg</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                            
+                            <!-- Paso 4: Completado -->
+                            <li class="mb-10 ml-8">
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-gray-900">
+                                    Prueba de Materiales (Dureza)
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">Completado</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Completado el 2024-10-05</time>
+                            </li>
+                            
+                            <!-- Paso 5: Completado -->
+                            <li class="ml-8">
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-gray-900">
+                                    Liberación de Lote
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">Completado</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Completado el 2024-10-05</time>
+                            </li>
+                        </ol>
+
+                    </div>
+                </div>
+
+            </div> <!-- Fin Columna Principal -->
+
+            <!-- Columna de Sidebar (Estado y Acciones) -->
+            <div class="lg:col-span-1 space-y-6 mt-6 lg:mt-0">
+                
+                <!-- Tarjeta de Resumen Final -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="p-5">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                            Resumen Final
+                        </h3>
+                        
+                        <!-- Barra de Progreso -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-base font-medium text-green-700">Progreso General</span>
+                                <span class="text-sm font-medium text-green-700">100%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-green-600 h-2.5 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Info -->
+                        <ul class="mt-5 divide-y divide-gray-200">
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-gray-600">Responsable:</span>
+                                <span class="text-gray-900">Carlos V.</span>
+                            </li>
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-gray-600">Fecha de Inicio:</span>
+                                <span class="text-gray-900">2024-10-01</span>
+                            </li>
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-gray-600">Fecha de Finalización:</span>
+                                <span class="text-gray-900">2024-10-05</span>
+                            </li>
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-gray-600">Duración Total:</span>
+                                <span class="font-semibold text-gray-900">5 días</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- (Se elimina la tarjeta de "Mandar Reporte" porque el ensamble ya está terminado) -->
+
+            </div> <!-- Fin Columna Sidebar -->
+
+        </div>
+    </main>
+
+</body>
+</html>

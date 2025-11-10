@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topre - Detalle de Ensamble</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la fuente Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Componente: Encabezado (Header) -->
+    <header class="bg-white shadow-sm">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <div class="flex-shrink-0 flex items-center">
+            <h1 class="text-3xl font-bold text-sky-800">Topre</h1>
+            <span class="ml-4 text-gray-500 font-medium">Portal de Mantenimiento</span>
+          </div>
+          
+          <!-- Info de Usuario (Hardcodeada) -->
+          <div class="flex items-center">
+            <span class="text-gray-700 mr-3">
+              Hola, <span class="font-medium">Carlos V.</span>
+            </span>
+            <!-- Icono de Usuario -->
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <button
+              class="ml-4 text-sm font-medium text-gray-600 hover:text-sky-700"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      
+        <!-- Link de Volver -->
+        <div class="mb-4">
+            <a href="#" class="text-sm font-medium text-sky-700 hover:text-sky-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5 mr-1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Volver al Dashboard
+            </a>
+        </div>
+
+        <!-- Layout de 3 Columnas (2 para contenido, 1 para sidebar) -->
+        <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+            
+            <!-- Columna Principal (Proceso) -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Tarjeta de Información General -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="p-5">
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            Tipo: QC
+                        </span>
+                        <h2 class="mt-3 text-2xl font-semibold text-gray-800">
+                            Ensamble: T/T-57-59 Y 6 / 3W0
+                        </h2>
+                        <p class="text-sm text-gray-500">Número: 63210/610-3W0-A000-H1</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta del Proceso (Checklist) -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="p-5">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-5">
+                            Proceso de Ensamble (Tipo: QC)
+                        </h3>
+
+                        <!-- Lista de Pasos (Stepper) -->
+                        <ol class="relative border-l border-gray-200">                  
+                            
+                            <!-- Paso 1: Completado -->
+                            <li class="mb-10 ml-8">            
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-gray-900">
+                                    Recepción de Piezas 
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">Completado</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Completado el 2024-10-02</time>
+                                <p class="mb-4 text-base font-normal text-gray-500">Recepción y registro de 50 unidades del modelo 3W0.</p>
+                            </li>
+                            
+                            <!-- Paso 2: Completado -->
+                            <li class="mb-10 ml-8">            
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-green-500 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-gray-900">
+                                    Inspección Visual 
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">Completado</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Completado el 2024-10-03</time>
+                                <p class="text-base font-normal text-gray-500">Verificación de acabados, sin golpes ni rayaduras en lote.</p>
+                            </li>
+                            
+                            <!-- Paso 3: En Progreso -->
+                            <li class="mb-10 ml-8">
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-sky-700 rounded-full -left-4 ring-8 ring-white">
+                                    <!-- Icono de "en progreso" o un punto -->
+                                    <svg class="w-4 h-4 text-white animate-pulse" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd"></path></svg>
+                                </span>
+                                <h4 class="flex items-center mb-1 text-lg font-semibold text-sky-800">
+                                    Medición Dimensional (CMM)
+                                    <span class="bg-sky-100 text-sky-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded ml-3">En Progreso</span>
+                                </h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Iniciado el 2024-10-04</time>
+                                <p class="text-base font-normal text-gray-500">Midiendo puntos críticos de control (PCC) en máquina CMM. 30/50 piezas medidas.</p>
+                                
+                                <!-- Apartado de Evidencia -->
+                                <div class="mt-4 p-4 bg-gray-50 rounded-lg border">
+                                    <label for="evidencia" class="block text-sm font-medium text-gray-700 mb-2">Subir Evidencia (Reporte CMM, Fotos)</label>
+                                    <input id="evidencia" name="evidencia" type="file" multiple class="block w-full text-sm text-gray-500
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-full file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-sky-50 file:text-sky-700
+                                      hover:file:bg-sky-100
+                                    "/>
+                                </div>
+                            </li>
+                            
+                            <!-- Paso 4: Pendiente -->
+                            <li class="mb-10 ml-8">
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-gray-300 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 13a1 1 0 112 0 1 1 0 01-2 0zm1-8a1 1 0 011 1v4a1 1 0 11-2 0V6a1 1 0 011-1z"></path></svg>
+                                </span>
+                                <h4 class="mb-1 text-lg font-semibold text-gray-400">Prueba de Materiales (Dureza)</h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Pendiente</time>
+                            </li>
+                            
+                            <!-- Paso 5: Pendiente -->
+                            <li class="ml-8">
+                                <span class="absolute flex items-center justify-center w-8 h-8 bg-gray-300 rounded-full -left-4 ring-8 ring-white">
+                                    <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 13a1 1 0 112 0 1 1 0 01-2 0zm1-8a1 1 0 011 1v4a1 1 0 11-2 0V6a1 1 0 011-1z"></path></svg>
+                                </span>
+                                <h4 class="mb-1 text-lg font-semibold text-gray-400">Liberación de Lote</h4>
+                                <time class="block mb-2 text-sm font-normal leading-none text-gray-400">Pendiente</time>
+                            </li>
+                        </ol>
+
+                    </div>
+                </div>
+
+            </div> <!-- Fin Columna Principal -->
+
+            <!-- Columna de Sidebar (Estado y Acciones) -->
+            <div class="lg:col-span-1 space-y-6 mt-6 lg:mt-0">
+                
+                <!-- Tarjeta de Estado Actual -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="p-5">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                            Estado Actual
+                        </h3>
+                        
+                        <!-- Barra de Progreso -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-base font-medium text-sky-700">Progreso General</span>
+                                <span class="text-sm font-medium text-sky-700">75%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-sky-600 h-2.5 rounded-full" style="width: 75%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Info -->
+                        <ul class="mt-5 divide-y divide-gray-200">
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-gray-600">Responsable:</span>
+                                <span class="text-gray-900">Carlos V.</span>
+                            </li>
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-gray-600">Fecha de Inicio:</span>
+                                <span class="text-gray-900">2024-10-01</span>
+                            </li>
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-gray-600">Deadline:</span>
+                                <span class="text-gray-900">2024-10-30</span>
+                            </li>
+                            <li class="py-3 flex justify-between text-sm">
+                                <span class="font-medium text-red-600">Días Restantes:</span>
+                                <span class="font-semibold text-red-600">21 días</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tarjeta de Acciones (Reporte) -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="p-5">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                            Mandar Reporte
+                        </h3>
+                        
+                        <form class="space-y-4">
+                            <div>
+                                <label for="admin-select" class="block text-sm font-medium text-gray-700 mb-1">Enviar correo a Administrador:</label>
+                                <select id="admin-select" name="admin-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                                    <option>Seleccionar un administrador...</option>
+                                    <option value="leo@topre.com">Leo R.</option>
+                                    <option value="martin@topre.com">Martin B.</option>
+                                    <option value="admin@topre.com">Admin General</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="report-message" class="block text-sm font-medium text-gray-700 mb-1">Mensaje / Observaciones:</label>
+                                <textarea id="report-message" name="report-message" rows="4" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" placeholder="Escribir reporte de no conformidad, solicitud de ayuda, etc..."></textarea>
+                            </div>
+
+                            <div>
+                                <button
+                                  type="submit"
+                                  class="w-full flex items-center justify-center gap-2 bg-sky-700 hover:bg-sky-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-5 h-5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.875L6 12z" />
+                                    </svg>
+                                    Enviar Reporte
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div> <!-- Fin Columna Sidebar -->
+
+        </div>
+    </main>
+
+</body>
+</html>

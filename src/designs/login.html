@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topre Maintenance Control - Iniciar Sesión</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la fuente Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Aplicamos la fuente Inter como base */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Definimos los colores personalizados basados en la imagen de Topre */
+        .bg-topre-dark { background-color: #004a99; } /* Azul oscuro principal */
+        .bg-topre-medium { background-color: #005ab8; } /* Azul medio de los paneles */
+        .bg-topre-header { background-color: #f0f0f0; } /* Gris claro del header original (aunque usaré azul) */
+        .text-topre-logo { color: #005ab8; } /* Color del logo */
+        
+        /* Para este login, usaré los azules oscuros para el fondo y la tarjeta,
+           inspirado en la barra superior de la imagen */
+        
+        /* Colores que usaré (simplificados y potentes) */
+        /* bg-sky-900 (Fondo)
+           bg-sky-800 (Tarjeta)
+           bg-sky-600 (Botón)
+        */
+
+    </style>
+</head>
+<body class="bg-sky-900 min-h-screen flex flex-col items-center justify-center text-white p-4">
+
+    <!-- Contenedor principal del Login -->
+    <div class="w-full max-w-md">
+        
+        <!-- Logo/Encabezado -->
+        <div class="mb-8 text-center">
+            <!-- Texto "Topre" estilizado para parecerse al logo -->
+            <h1 class="text-5xl font-bold tracking-tight" style="color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+                Topre
+            </h1>
+            <p class="text-sky-200 text-lg mt-2">Portal de Control de Mantenimiento</p>
+        </div>
+
+        <!-- Tarjeta de Login -->
+        <div class="bg-sky-800 p-8 rounded-xl shadow-2xl w-full">
+            
+            <!-- Vista de Login (se oculta si el usuario está logueado) -->
+            <form id="login-form" class="space-y-6">
+                <h2 class="text-2xl font-semibold text-center mb-6">Iniciar Sesión</h2>
+                
+                <!-- Mensaje de Error -->
+                <div id="error-message" class="hidden p-3 bg-red-800 text-red-100 rounded-md text-sm">
+                    <!-- Los mensajes de error se insertarán aquí -->
+                </div>
+                
+                <!-- Campo de Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-sky-100 mb-2">Correo Electrónico</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        required 
+                        class="w-full p-3 bg-sky-950 border border-sky-700 rounded-md text-white placeholder-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="ingeniero@topre.com"
+                    >
+                </div>
+                
+                <!-- Campo de Contraseña -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-sky-100 mb-2">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        class="w-full p-3 bg-sky-950 border border-sky-700 rounded-md text-white placeholder-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="••••••••"
+                    >
+                </div>
+                
+                <!-- Botón de Ingresar -->
+                <button 
+                    type="submit" 
+                    id="login-button"
+                    class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold p-3 rounded-md transition duration-300 ease-in-out shadow-lg disabled:opacity-50 disabled:cursor-wait"
+                >
+                    Ingresar
+                </button>
+            </form>
+
+            <!-- Vista de Carga (se muestra mientras se loguea) -->
+            <div id="loading-view" class="hidden text-center py-10">
+                <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-4 text-sky-200">Verificando...</p>
+            </div>
+
+            <!-- Vista de "Logueado" (se muestra al autenticarse) -->
+            <div id="logged-in-view" class="hidden text-center py-10">
+                <h2 class="text-2xl font-semibold text-center mb-4">¡Bienvenido!</h2>
+                <p class="text-sky-200">Usuario: <span id="user-email" class="font-medium"></span></p>
+                <p class="mt-6 text-sky-100">Serás redirigido a tu portal...</p>
+                <!-- Aquí iría la lógica para redirigir según el rol -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Importa las funciones necesarias de los SDKs de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithEmailAndPassword,
+            signInWithCustomToken,
+            signInAnonymously,
+            setPersistence,
+            browserSessionPersistence // O browserLocalPersistence para persistencia más larga
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configuración y Variables Globales ---
+
+        // Configuración de Firebase (inyectada por el entorno)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : { /* Configuración de fallback (no debería usarse en producción) */
+                apiKey: "TU_API_KEY",
+                authDomain: "TU_AUTH_DOMAIN",
+                projectId: "TU_PROJECT_ID",
+                storageBucket: "TU_STORAGE_BUCKET",
+                messagingSenderId: "TU_MESSAGING_SENDER_ID",
+                appId: "TU_APP_ID"
+            };
+
+        // Token de autenticación (inyectado por el entorno)
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' 
+            ? __initial_auth_token 
+            : null;
+
+        // Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Habilita logs de Firestore para debugging
+        setLogLevel('Debug');
+
+        // --- Referencias a Elementos del DOM ---
+        const loginForm = document.getElementById('login-form');
+        const loginButton = document.getElementById('login-button');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        
+        const errorMessageDiv = document.getElementById('error-message');
+        
+        const loadingView = document.getElementById('loading-view');
+        const loggedInView = document.getElementById('logged-in-view');
+        const userEmailSpan = document.getElementById('user-email');
+
+        // --- Funciones de UI ---
+
+        /** Muestra un mensaje de error */
+        function showErrorMessage(message) {
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.classList.remove('hidden');
+        }
+
+        /** Oculta el mensaje de error */
+        function clearErrorMessage() {
+            errorMessageDiv.textContent = '';
+            errorMessageDiv.classList.add('hidden');
+        }
+
+        /** Cambia la vista de la tarjeta (login, loading, logged-in) */
+        function setView(viewName) {
+            loginForm.classList.add('hidden');
+            loadingView.classList.add('hidden');
+            loggedInView.classList.add('hidden');
+
+            if (viewName === 'login') {
+                loginForm.classList.remove('hidden');
+                loginButton.disabled = false;
+                loginButton.textContent = 'Ingresar';
+            } else if (viewName === 'loading') {
+                loadingView.classList.remove('hidden');
+            } else if (viewName === 'logged-in') {
+                loggedInView.classList.remove('hidden');
+            }
+        }
+
+        // --- Lógica de Autenticación ---
+
+        /** Maneja el envío del formulario de login */
+        async function handleLogin(e) {
+            e.preventDefault();
+            clearErrorMessage();
+            
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                showErrorMessage('Por favor, ingresa correo y contraseña.');
+                return;
+            }
+
+            // Deshabilitar botón y mostrar carga
+            loginButton.disabled = true;
+            loginButton.textContent = 'Ingresando...';
+            
+            try {
+                // Establecer persistencia de sesión (opcional, pero recomendado)
+                // 'session' dura hasta que se cierra la pestaña/navegador
+                // 'local' dura hasta que el usuario hace sign-out
+                await setPersistence(auth, browserSessionPersistence);
+                
+                // Iniciar sesión
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('Inicio de sesión exitoso:', userCredential.user.uid);
+                // El onAuthStateChanged se encargará de cambiar la UI
+                
+            } catch (error) {
+                console.error('Error en inicio de sesión:', error.code);
+                // Traducir errores comunes
+                let friendlyMessage = 'Ocurrió un error. Intenta de nuevo.';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    friendlyMessage = 'Correo o contraseña incorrectos.';
+                } else if (error.code === 'auth/invalid-email') {
+                    friendlyMessage = 'El formato del correo no es válido.';
+                }
+                
+                showErrorMessage(friendlyMessage);
+                setView('login'); // Regresar a la vista de login
+            }
+        }
+
+        /** Observador del estado de autenticación */
+        function setupAuthObserver() {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // --- Usuario está autenticado ---
+                    console.log('onAuthStateChanged: Usuario autenticado', user.uid);
+                    userEmailSpan.textContent = user.email || 'Usuario';
+                    setView('logged-in');
+
+                    // TODO: Redirección basada en rol
+                    // 1. Obtener el rol del usuario desde Firestore (colección 'users')
+                    // const userDocRef = doc(db, 'users', user.uid);
+                    // const userDoc = await getDoc(userDocRef);
+                    // if (userDoc.exists()) {
+                    //    const userData = userDoc.data();
+                    //    if (userData.role === 'admin') {
+                    //        // window.location.href = '/admin-dashboard.html';
+                    //        console.log('Redirigiendo a dashboard de Admin...');
+                    //    } else {
+                    //        // window.location.href = '/engineer-dashboard.html';
+                    //        console.log('Redirigiendo a dashboard de Ingeniero...');
+                    //    }
+                    // } else {
+                    //    console.error('No se encontró el documento del usuario para definir el rol.');
+                    //    showErrorMessage('No se pudo verificar tu rol.');
+                    //    // (Opcional: hacer sign-out)
+                    // }
+                    
+                    // Simulación de redirección
+                    setTimeout(() => {
+                         console.log("Simulando redirección a dashboard...");
+                    }, 2000);
+
+                } else {
+                    // --- Usuario no está autenticado ---
+                    console.log('onAuthStateChanged: Usuario no autenticado.');
+                    setView('login');
+                }
+            });
+        }
+
+        /** Inicializa la autenticación del entorno de Canvas */
+        async function initializeEnvironmentAuth() {
+            try {
+                if (initialAuthToken) {
+                    console.log("Iniciando sesión con Custom Token...");
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    console.log("No hay Custom Token, iniciando sesión anónimamente...");
+                    await signInAnonymously(auth);
+                }
+                console.log("Autenticación del entorno lista.");
+            } catch (error) {
+                console.error("Error en la autenticación del entorno:", error);
+                // Mostrar un error crítico si la autenticación anónima/custom falla
+                showErrorMessage("Error al conectar con el servicio de autenticación.");
+                setView('loading'); // Dejar en estado de carga/error
+            }
+        }
+
+        // --- Punto de Entrada ---
+        
+        // Asigna el evento al formulario
+        loginForm.addEventListener('submit', handleLogin);
+        
+        // 1. Inicializa la autenticación del entorno (Custom Token o Anónimo)
+        await initializeEnvironmentAuth();
+        
+        // 2. Configura el observador que reacciona a los cambios de estado (incluido el login manual)
+        setupAuthObserver();
+
+    </script>
+
+</body>
+</html>
