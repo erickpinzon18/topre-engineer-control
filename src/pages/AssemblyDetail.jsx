@@ -543,7 +543,7 @@ const AssemblyDetail = () => {
       <Navbar />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
         
         {/* Back Link */}
         <div className="mb-4">
@@ -559,20 +559,20 @@ const AssemblyDetail = () => {
         </div>
 
         {/* Layout: 2 columnas + sidebar */}
-        <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+        <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-8 lg:space-y-0">
           
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-6">
 
             {/* General Info Card */}
             <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div className="p-5">
-                <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+              <div className="p-4 sm:p-5">
+                <span className={`px-2.5 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                   assembly.tipo === 'QC' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                 }`}>
                   Tipo: {assembly.tipo}
                 </span>
-                <h2 className="mt-3 text-2xl font-semibold text-gray-800">
+                <h2 className="mt-3 text-lg sm:text-2xl font-semibold text-gray-800">
                   Ensamble: {assembly.maquina} / {assembly.modelo}
                 </h2>
                 <p className="text-sm text-gray-500">Número: {assembly.numero}</p>
@@ -581,8 +581,8 @@ const AssemblyDetail = () => {
 
             {/* Process Details Card */}
             <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div className="p-5">
-                <h3 className="text-xl font-semibold text-gray-900 mb-5">
+              <div className="p-4 sm:p-5">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-5">
                   {assembly.tipo === 'QC' ? 'LEVEL UP - Mejora de Número de Parte' : 'Proceso TEACH'}
                 </h3>
 
@@ -592,15 +592,15 @@ const AssemblyDetail = () => {
                   {assembly.tipo === 'QC' && (
                     <>
                       {/* Meta Indicator */}
-                      <div className="bg-sky-50 border-l-4 border-sky-500 p-4 mb-4">
-                        <div className="flex items-center">
+                      <div className="bg-sky-50 border-l-4 border-sky-500 p-3 sm:p-4 mb-4">
+                        <div className="flex items-start sm:items-center">
                           <div className="shrink-0">
                             <svg className="h-5 w-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <p className="text-sm text-sky-700">
+                            <p className="text-xs sm:text-sm text-sky-700">
                               <span className="font-semibold">Porcentaje Meta: 97%</span> - Alcanzar este valor para estado OK
                             </p>
                           </div>
@@ -703,15 +703,15 @@ const AssemblyDetail = () => {
                   {/* TEACH Fields */}
                   {assembly.tipo === 'TEACH' && (
                     <>
-                      <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
-                        <div className="flex items-center">
+                      <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 mb-4">
+                        <div className="flex items-start sm:items-center">
                           <div className="shrink-0">
                             <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <p className="text-sm text-green-700">
+                            <p className="text-xs sm:text-sm text-green-700">
                               <span className="font-semibold">Proceso TEACH</span> - Registra la información del proceso de enseñanza del robot
                             </p>
                           </div>
@@ -719,13 +719,13 @@ const AssemblyDetail = () => {
                       </div>
 
                       {/* Comparación de Tiempos - Jig 1 */}
-                      <div className="mb-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                        <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
-                          <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                      <div className="mb-6 p-3 sm:p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                        <h4 className="text-xs sm:text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                          <span className="bg-blue-600 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
                           Jig 1 - Comparación de Tiempos
                         </h4>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Tiempo Establecido (seg)
@@ -779,13 +779,13 @@ const AssemblyDetail = () => {
                       </div>
 
                       {/* Comparación de Tiempos - Jig 2 */}
-                      <div className="mb-6 p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
-                        <h4 className="text-sm font-semibold text-purple-900 mb-3 flex items-center">
-                          <span className="bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                      <div className="mb-6 p-3 sm:p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+                        <h4 className="text-xs sm:text-sm font-semibold text-purple-900 mb-3 flex items-center">
+                          <span className="bg-purple-600 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
                           Jig 2 - Comparación de Tiempos
                         </h4>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Tiempo Establecido (seg)
@@ -857,11 +857,11 @@ const AssemblyDetail = () => {
 
                       {/* Sección Destructiva */}
                       <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                        <h4 className="text-md font-semibold text-gray-900 mb-4">Prueba Destructiva</h4>
+                        <h4 className="text-sm sm:text-md font-semibold text-gray-900 mb-4">Prueba Destructiva</h4>
                         
                         {/* Jig 1 */}
-                        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                          <h5 className="text-sm font-semibold text-gray-700 mb-3">Jig 1</h5>
+                        <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <h5 className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Jig 1</h5>
                           
                           <div className="mb-3">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -882,11 +882,11 @@ const AssemblyDetail = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Resultado de Prueba Destructiva
                             </label>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                               <button
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig1: 'OK' }))}
-                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all text-sm ${
                                   formData.resultadoDestructivaJig1 === 'OK'
                                     ? 'bg-green-600 text-white shadow-md scale-105'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -897,7 +897,7 @@ const AssemblyDetail = () => {
                               <button
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig1: 'NG' }))}
-                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all text-sm ${
                                   formData.resultadoDestructivaJig1 === 'NG'
                                     ? 'bg-red-600 text-white shadow-md scale-105'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -910,8 +910,8 @@ const AssemblyDetail = () => {
                         </div>
 
                         {/* Jig 2 */}
-                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                          <h5 className="text-sm font-semibold text-gray-700 mb-3">Jig 2</h5>
+                        <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <h5 className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Jig 2</h5>
                           
                           <div className="mb-3">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -932,11 +932,11 @@ const AssemblyDetail = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Resultado de Prueba Destructiva
                             </label>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                               <button
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig2: 'OK' }))}
-                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all text-sm ${
                                   formData.resultadoDestructivaJig2 === 'OK'
                                     ? 'bg-green-600 text-white shadow-md scale-105'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -947,7 +947,7 @@ const AssemblyDetail = () => {
                               <button
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig2: 'NG' }))}
-                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all text-sm ${
                                   formData.resultadoDestructivaJig2 === 'NG'
                                     ? 'bg-red-600 text-white shadow-md scale-105'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -979,30 +979,30 @@ const AssemblyDetail = () => {
 
             {/* History Section */}
             <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-              <div className="px-6 py-5 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                <div className="flex items-center justify-between">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center space-x-3">
                     <div className="bg-sky-600 p-2 rounded-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-white">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">
+                      <h3 className="text-base sm:text-lg font-bold text-gray-900">
                         Historial de Registros
                       </h3>
-                      <p className="text-sm text-gray-600 mt-0.5 font-medium">
+                      <p className="text-xs sm:text-sm text-gray-600 mt-0.5 font-medium">
                         {history.length} {history.length === 1 ? 'registro guardado' : 'registros guardados'}
                       </p>
                     </div>
                   </div>
-                  <div className="bg-sky-100 text-sky-700 px-4 py-2 rounded-full font-bold text-sm">
+                  <div className="bg-sky-100 text-sky-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm self-start">
                     Total: {history.length}
                   </div>
                 </div>
               </div>
               
-              <div className="p-6 bg-gray-50">
+              <div className="p-4 sm:p-6 bg-gray-50">
                 {history.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 mx-auto text-gray-400 mb-3">
@@ -1043,13 +1043,13 @@ const AssemblyDetail = () => {
                           }`}
                         >
                           {/* Header */}
-                          <div className={`px-5 py-4 flex items-center justify-between ${
+                          <div className={`px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between ${
                             index === 0 
                               ? 'bg-gradient-to-r from-sky-500 to-sky-600 border-b border-sky-400' 
                               : 'bg-gradient-to-r from-gray-100 to-gray-50 border-b border-gray-200'
                           }`}>
-                            <div className="flex items-center space-x-3">
-                              <div className={`flex items-center justify-center w-10 h-10 rounded-lg font-bold text-base shadow-md ${
+                            <div className="flex items-center space-x-2 sm:space-x-3">
+                              <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-bold text-sm sm:text-base shadow-md ${
                                 index === 0 
                                   ? 'bg-white text-sky-600' 
                                   : 'bg-gray-600 text-white'
@@ -1057,7 +1057,7 @@ const AssemblyDetail = () => {
                                 {history.length - index}
                               </div>
                               <div>
-                                <h4 className={`text-sm font-bold ${
+                                <h4 className={`text-xs sm:text-sm font-bold ${
                                   index === 0 ? 'text-white' : 'text-gray-900'
                                 }`}>
                                   Registro #{history.length - index}
@@ -1072,7 +1072,7 @@ const AssemblyDetail = () => {
                                 }`}>
                                   {record.createdAt?.toLocaleDateString('es-MX', { 
                                     year: 'numeric', 
-                                    month: 'long', 
+                                    month: 'short', 
                                     day: 'numeric',
                                     hour: '2-digit',
                                     minute: '2-digit'
@@ -1096,20 +1096,20 @@ const AssemblyDetail = () => {
                           </div>
 
                           {/* Body */}
-                          <div className="p-5">
+                          <div className="p-4 sm:p-5">
                             {/* User Info */}
-                            <div className="mb-5 pb-4 border-b-2 border-gray-100 flex items-center space-x-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-sky-600">
+                            <div className="mb-4 sm:mb-5 pb-3 sm:pb-4 border-b-2 border-gray-100 flex items-center space-x-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                               </svg>
                               <div>
                                 <p className="text-xs text-gray-500 font-medium">Guardado por</p>
-                                <p className="text-sm font-semibold text-gray-900">{record.savedBy}</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-900">{record.savedBy}</p>
                               </div>
                             </div>
 
                             {/* Data Table */}
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto -mx-4 sm:mx-0">
                               <table className="min-w-full">
                                 <tbody className="divide-y divide-gray-100">
                                   {Object.entries(record.data).map(([key, value]) => {
@@ -1121,10 +1121,10 @@ const AssemblyDetail = () => {
                                     
                                     return (
                                       <tr key={key} className="hover:bg-gray-50 transition-colors">
-                                        <td className="py-3 pr-4 text-sm font-semibold text-gray-700 align-top w-1/2">
+                                        <td className="py-2 sm:py-3 px-4 sm:pr-4 text-xs sm:text-sm font-semibold text-gray-700 align-top w-1/2">
                                           {fieldLabels[key] || key.replace(/([A-Z])/g, ' $1').trim()}
                                         </td>
-                                        <td className="py-3 text-sm text-gray-900 font-medium">
+                                        <td className="py-2 sm:py-3 px-4 sm:px-0 text-xs sm:text-sm text-gray-900 font-medium">
                                           {(isEstado || isResultadoDestructiva) ? (
                                             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
                                               value === 'OK' 
@@ -1210,10 +1210,10 @@ const AssemblyDetail = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6 mt-6 lg:mt-0">
+          <div className="lg:col-span-1 space-y-6">
             
             {/* Send Report Card */}
-            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+            {/* <div className="bg-white shadow-lg rounded-lg overflow-hidden">
               <div className="p-5">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
                   Enviar Reporte
@@ -1231,20 +1231,20 @@ const AssemblyDetail = () => {
                   <span>Enviar Reporte por Correo</span>
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Current Status Card */}
             <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div className="p-5">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              <div className="p-4 sm:p-5">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
                   Estado Actual
                 </h3>
                 
                 {/* Progress Bar */}
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-base font-medium text-sky-700">Progreso General</span>
-                    <span className="text-sm font-medium text-sky-700">{progress}%</span>
+                    <span className="text-sm sm:text-base font-medium text-sky-700">Progreso General</span>
+                    <span className="text-xs sm:text-sm font-medium text-sky-700">{progress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div className="bg-sky-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
@@ -1253,23 +1253,23 @@ const AssemblyDetail = () => {
 
                 {/* Info List */}
                 <ul className="mt-5 divide-y divide-gray-200">
-                  <li className="py-3 flex justify-between text-sm">
+                  <li className="py-2.5 sm:py-3 flex justify-between text-xs sm:text-sm">
                     <span className="font-medium text-gray-600">Responsable:</span>
-                    <span className="text-gray-900">{assembly.userName}</span>
+                    <span className="text-gray-900 text-right ml-2">{assembly.userName}</span>
                   </li>
-                  <li className="py-3 flex justify-between text-sm">
+                  <li className="py-2.5 sm:py-3 flex justify-between text-xs sm:text-sm">
                     <span className="font-medium text-gray-600">Fecha de Inicio:</span>
-                    <span className="text-gray-900">{assembly.fechaInicio}</span>
+                    <span className="text-gray-900 text-right ml-2">{assembly.fechaInicio}</span>
                   </li>
-                  <li className="py-3 flex justify-between text-sm">
+                  <li className="py-2.5 sm:py-3 flex justify-between text-xs sm:text-sm">
                     <span className="font-medium text-gray-600">Deadline:</span>
-                    <span className="text-gray-900">{assembly.fechaDeadline}</span>
+                    <span className="text-gray-900 text-right ml-2">{assembly.fechaDeadline}</span>
                   </li>
-                  <li className="py-3 flex justify-between text-sm">
+                  <li className="py-2.5 sm:py-3 flex justify-between text-xs sm:text-sm">
                     <span className={`font-medium ${daysRemaining < 7 ? 'text-red-600' : 'text-gray-600'}`}>
                       Días Restantes:
                     </span>
-                    <span className={`font-semibold ${daysRemaining < 7 ? 'text-red-600' : 'text-gray-900'}`}>
+                    <span className={`font-semibold text-right ml-2 ${daysRemaining < 7 ? 'text-red-600' : 'text-gray-900'}`}>
                       {daysRemaining} días
                     </span>
                   </li>
