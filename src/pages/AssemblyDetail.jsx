@@ -47,7 +47,7 @@ const AssemblyDetail = () => {
       
       setHistory(historyData);
       
-      // Para QC, inicializar formulario vacío siempre
+      // Para QC y TEACH, inicializar formulario vacío siempre
       if (assemblyType === 'QC') {
         setFormData({
           fechaAjuste: toLocalDateTimeString(new Date()),
@@ -58,14 +58,21 @@ const AssemblyDetail = () => {
           linkReporteIR: ''
         });
         return historyData.length > 0;
-      } else if (assemblyType === 'TEACH' && historyData.length > 0) {
-        // Para TEACH mantener el comportamiento anterior
-        const lastRecord = historyData[0].data;
+      } else if (assemblyType === 'TEACH') {
         setFormData({
-          ...lastRecord,
-          ultimoAjuste: lastRecord.ultimoAjuste || toLocalDateTimeString(historyData[0].createdAt)
+          tiempoEstablecidoJig1: '',
+          tiempoObtenidoJig1: '',
+          mejoraPorcentajeJig1: '',
+          tiempoEstablecidoJig2: '',
+          tiempoObtenidoJig2: '',
+          mejoraPorcentajeJig2: '',
+          emisionPuntoCambio: '',
+          pzDestructivaJig1: '',
+          pzDestructivaJig2: '',
+          resultadoDestructivaJig1: '',
+          resultadoDestructivaJig2: ''
         });
-        return true;
+        return historyData.length > 0;
       }
       return false;
     } catch (error) {
@@ -99,18 +106,23 @@ const AssemblyDetail = () => {
             });
           } else if (data.tipo === 'TEACH') {
             setFormData({
-              porcentajeTiempoJigs: '',
-              nombrePrograma: '',
-              nombreProgramaNuevo: '',
-              tiempoMeta: '',
-              tiempoAlcanzado: '',
-              emisionPuntoCambio: ''
+              tiempoEstablecidoJig1: '',
+              tiempoObtenidoJig1: '',
+              mejoraPorcentajeJig1: '',
+              tiempoEstablecidoJig2: '',
+              tiempoObtenidoJig2: '',
+              mejoraPorcentajeJig2: '',
+              emisionPuntoCambio: '',
+              pzDestructivaJig1: '',
+              pzDestructivaJig2: '',
+              resultadoDestructivaJig1: '',
+              resultadoDestructivaJig2: ''
             });
           }
         }
       } else {
         alert('Ensamble no encontrado');
-        navigate('/dashboard');
+        navigate('/engineer');
       }
     } catch (error) {
       console.error('Error cargando ensamble:', error);
@@ -137,15 +149,34 @@ const AssemblyDetail = () => {
       }
     }
 
-    // Si es TEACH, calcular tiempo meta automáticamente (10% menos)
-    if (assembly?.tipo === 'TEACH' && name === 'porcentajeTiempoJigs') {
-      const tiempo = parseFloat(value);
-      if (!isNaN(tiempo)) {
-        const tiempoMeta = (tiempo * 0.9).toFixed(2);
-        setFormData(prev => ({
-          ...prev,
-          tiempoMeta: tiempoMeta
-        }));
+    // Si es TEACH, calcular automáticamente el porcentaje de mejora
+    if (assembly?.tipo === 'TEACH') {
+      // Para Jig 1
+      if (name === 'tiempoEstablecidoJig1' || name === 'tiempoObtenidoJig1') {
+        const establecido = name === 'tiempoEstablecidoJig1' ? parseFloat(value) : parseFloat(formData.tiempoEstablecidoJig1);
+        const obtenido = name === 'tiempoObtenidoJig1' ? parseFloat(value) : parseFloat(formData.tiempoObtenidoJig1);
+        
+        if (!isNaN(establecido) && !isNaN(obtenido) && establecido > 0) {
+          const mejora = ((establecido - obtenido) / establecido) * 100;
+          setFormData(prev => ({
+            ...prev,
+            mejoraPorcentajeJig1: mejora.toFixed(2)
+          }));
+        }
+      }
+
+      // Para Jig 2
+      if (name === 'tiempoEstablecidoJig2' || name === 'tiempoObtenidoJig2') {
+        const establecido = name === 'tiempoEstablecidoJig2' ? parseFloat(value) : parseFloat(formData.tiempoEstablecidoJig2);
+        const obtenido = name === 'tiempoObtenidoJig2' ? parseFloat(value) : parseFloat(formData.tiempoObtenidoJig2);
+        
+        if (!isNaN(establecido) && !isNaN(obtenido) && establecido > 0) {
+          const mejora = ((establecido - obtenido) / establecido) * 100;
+          setFormData(prev => ({
+            ...prev,
+            mejoraPorcentajeJig2: mejora.toFixed(2)
+          }));
+        }
       }
     }
   };
@@ -213,12 +244,17 @@ const AssemblyDetail = () => {
         });
       } else if (assembly?.tipo === 'TEACH') {
         setFormData({
-          porcentajeTiempoJigs: '',
-          nombrePrograma: '',
-          nombreProgramaNuevo: '',
-          tiempoMeta: '',
-          tiempoAlcanzado: '',
-          emisionPuntoCambio: ''
+          tiempoEstablecidoJig1: '',
+          tiempoObtenidoJig1: '',
+          mejoraPorcentajeJig1: '',
+          tiempoEstablecidoJig2: '',
+          tiempoObtenidoJig2: '',
+          mejoraPorcentajeJig2: '',
+          emisionPuntoCambio: '',
+          pzDestructivaJig1: '',
+          pzDestructivaJig2: '',
+          resultadoDestructivaJig1: '',
+          resultadoDestructivaJig2: ''
         });
       }
       
@@ -267,11 +303,16 @@ const AssemblyDetail = () => {
       estado: 'Estado',
       comentarios: 'Comentarios',
       linkReporteIR: 'Link Reporte IR',
-      porcentajeTiempoJigs: 'Porcentaje Tiempo Jigs',
-      nombrePrograma: 'Nombre Programa',
-      nombreProgramaNuevo: 'Nombre Programa Nuevo',
-      tiempoMeta: 'Tiempo Meta',
-      tiempoAlcanzado: 'Tiempo Alcanzado'
+      tiempoEstablecidoJig1: 'Tiempo Establecido Jig 1 (seg)',
+      tiempoObtenidoJig1: 'Tiempo Obtenido Jig 1 (seg)',
+      mejoraPorcentajeJig1: 'Mejora Jig 1 (%)',
+      tiempoEstablecidoJig2: 'Tiempo Establecido Jig 2 (seg)',
+      tiempoObtenidoJig2: 'Tiempo Obtenido Jig 2 (seg)',
+      mejoraPorcentajeJig2: 'Mejora Jig 2 (%)',
+      pzDestructivaJig1: 'Piezas Destructiva Jig 1',
+      pzDestructivaJig2: 'Piezas Destructiva Jig 2',
+      resultadoDestructivaJig1: 'Resultado Destructiva Jig 1',
+      resultadoDestructivaJig2: 'Resultado Destructiva Jig 2'
     };
 
     // Construir HTML profesional
@@ -378,9 +419,10 @@ const AssemblyDetail = () => {
                                 if (!value) return '';
                                 const label = fieldLabels[key] || key.replace(/([A-Z])/g, ' $1').trim();
                                 const isEstado = key === 'estado';
+                                const isResultadoDestructiva = key === 'resultadoDestructivaJig1' || key === 'resultadoDestructivaJig2';
                                 
                                 let valueDisplay = value;
-                                if (isEstado) {
+                                if (isEstado || isResultadoDestructiva) {
                                   const estadoColor = value === 'OK' ? '#16a34a' : value === 'NG' ? '#dc2626' : '#64748b';
                                   const estadoBg = value === 'OK' ? '#dcfce7' : value === 'NG' ? '#fee2e2' : '#f1f5f9';
                                   valueDisplay = `<span style="background-color: ${estadoBg}; color: ${estadoColor}; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 12px;">${value}</span>`;
@@ -506,7 +548,7 @@ const AssemblyDetail = () => {
         {/* Back Link */}
         <div className="mb-4">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/engineer')}
             className="text-sm font-medium text-sky-700 hover:text-sky-900 flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
@@ -552,7 +594,7 @@ const AssemblyDetail = () => {
                       {/* Meta Indicator */}
                       <div className="bg-sky-50 border-l-4 border-sky-500 p-4 mb-4">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0">
+                          <div className="shrink-0">
                             <svg className="h-5 w-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                             </svg>
@@ -661,94 +703,260 @@ const AssemblyDetail = () => {
                   {/* TEACH Fields */}
                   {assembly.tipo === 'TEACH' && (
                     <>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Porcentaje Tiempo por Ambos Jigs
-                          </label>
-                          <input
-                            type="number"
-                            name="porcentajeTiempoJigs"
-                            value={formData.porcentajeTiempoJigs || ''}
-                            onChange={handleChange}
-                            step="0.01"
-                            placeholder="0.00"
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tiempo Meta (10% menos)
-                          </label>
-                          <input
-                            type="number"
-                            name="tiempoMeta"
-                            value={formData.tiempoMeta || ''}
-                            readOnly
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500"
-                          />
+                      <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                        <div className="flex items-center">
+                          <div className="shrink-0">
+                            <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-green-700">
+                              <span className="font-semibold">Proceso TEACH</span> - Registra la información del proceso de enseñanza del robot
+                            </p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre de Programa
-                          </label>
-                          <input
-                            type="text"
-                            name="nombrePrograma"
-                            value={formData.nombrePrograma || ''}
-                            onChange={handleChange}
-                            placeholder="Programa actual"
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                          />
-                        </div>
+                      {/* Comparación de Tiempos - Jig 1 */}
+                      <div className="mb-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                        <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                          <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                          Jig 1 - Comparación de Tiempos
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Tiempo Establecido (seg)
+                            </label>
+                            <input
+                              type="number"
+                              name="tiempoEstablecidoJig1"
+                              value={formData.tiempoEstablecidoJig1 || ''}
+                              onChange={handleChange}
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Tiempo del manual</p>
+                          </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre de Programa Nuevo
-                          </label>
-                          <input
-                            type="text"
-                            name="nombreProgramaNuevo"
-                            value={formData.nombreProgramaNuevo || ''}
-                            onChange={handleChange}
-                            placeholder="Programa optimizado"
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                          />
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Tiempo Obtenido (seg)
+                            </label>
+                            <input
+                              type="number"
+                              name="tiempoObtenidoJig1"
+                              value={formData.tiempoObtenidoJig1 || ''}
+                              onChange={handleChange}
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Tiempo real alcanzado</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Mejora (%)
+                            </label>
+                            <div className={`w-full p-2 border rounded-md text-center font-bold text-lg ${
+                              formData.mejoraPorcentajeJig1 && parseFloat(formData.mejoraPorcentajeJig1) > 0
+                                ? 'bg-green-100 text-green-800 border-green-300'
+                                : formData.mejoraPorcentajeJig1 && parseFloat(formData.mejoraPorcentajeJig1) < 0
+                                ? 'bg-red-100 text-red-800 border-red-300'
+                                : 'bg-gray-100 text-gray-800 border-gray-300'
+                            }`}>
+                              {formData.mejoraPorcentajeJig1 ? `${formData.mejoraPorcentajeJig1}%` : '--'}
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">Calculado automáticamente</p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tiempo Alcanzado
-                          </label>
-                          <input
-                            type="number"
-                            name="tiempoAlcanzado"
-                            value={formData.tiempoAlcanzado || ''}
-                            onChange={handleChange}
-                            step="0.01"
-                            placeholder="0.00"
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                          />
+                      {/* Comparación de Tiempos - Jig 2 */}
+                      <div className="mb-6 p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+                        <h4 className="text-sm font-semibold text-purple-900 mb-3 flex items-center">
+                          <span className="bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                          Jig 2 - Comparación de Tiempos
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Tiempo Establecido (seg)
+                            </label>
+                            <input
+                              type="number"
+                              name="tiempoEstablecidoJig2"
+                              value={formData.tiempoEstablecidoJig2 || ''}
+                              onChange={handleChange}
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Tiempo del manual</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Tiempo Obtenido (seg)
+                            </label>
+                            <input
+                              type="number"
+                              name="tiempoObtenidoJig2"
+                              value={formData.tiempoObtenidoJig2 || ''}
+                              onChange={handleChange}
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Tiempo real alcanzado</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Mejora (%)
+                            </label>
+                            <div className={`w-full p-2 border rounded-md text-center font-bold text-lg ${
+                              formData.mejoraPorcentajeJig2 && parseFloat(formData.mejoraPorcentajeJig2) > 0
+                                ? 'bg-green-100 text-green-800 border-green-300'
+                                : formData.mejoraPorcentajeJig2 && parseFloat(formData.mejoraPorcentajeJig2) < 0
+                                ? 'bg-red-100 text-red-800 border-red-300'
+                                : 'bg-gray-100 text-gray-800 border-gray-300'
+                            }`}>
+                              {formData.mejoraPorcentajeJig2 ? `${formData.mejoraPorcentajeJig2}%` : '--'}
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">Calculado automáticamente</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Emisión de Punto de Cambio
+                        </label>
+                        <input
+                          type="text"
+                          name="emisionPuntoCambio"
+                          value={formData.emisionPuntoCambio || ''}
+                          onChange={handleChange}
+                          placeholder="Folio del punto de cambio (si aplica por reducción de tiempo)"
+                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Solo aplica si se redujo tiempo en el proceso
+                        </p>
+                      </div>
+
+                      {/* Sección Destructiva */}
+                      <div className="mt-6 pt-6 border-t-2 border-gray-200">
+                        <h4 className="text-md font-semibold text-gray-900 mb-4">Prueba Destructiva</h4>
+                        
+                        {/* Jig 1 */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <h5 className="text-sm font-semibold text-gray-700 mb-3">Jig 1</h5>
+                          
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Cantidad de Piezas
+                            </label>
+                            <input
+                              type="number"
+                              name="pzDestructivaJig1"
+                              value={formData.pzDestructivaJig1 || ''}
+                              onChange={handleChange}
+                              min="0"
+                              placeholder="0"
+                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Resultado de Prueba Destructiva
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig1: 'OK' }))}
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                  formData.resultadoDestructivaJig1 === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md scale-105'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK - Pasó prueba
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig1: 'NG' }))}
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                  formData.resultadoDestructivaJig1 === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md scale-105'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG - No pasó
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Emisión de Punto de Cambio
-                          </label>
-                          <input
-                            type="text"
-                            name="emisionPuntoCambio"
-                            value={formData.emisionPuntoCambio || ''}
-                            onChange={handleChange}
-                            placeholder="Folio del punto de cambio"
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                          />
+                        {/* Jig 2 */}
+                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <h5 className="text-sm font-semibold text-gray-700 mb-3">Jig 2</h5>
+                          
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Cantidad de Piezas
+                            </label>
+                            <input
+                              type="number"
+                              name="pzDestructivaJig2"
+                              value={formData.pzDestructivaJig2 || ''}
+                              onChange={handleChange}
+                              min="0"
+                              placeholder="0"
+                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Resultado de Prueba Destructiva
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig2: 'OK' }))}
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                  formData.resultadoDestructivaJig2 === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md scale-105'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK - Pasó prueba
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, resultadoDestructivaJig2: 'NG' }))}
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all ${
+                                  formData.resultadoDestructivaJig2 === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md scale-105'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG - No pasó
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </>
@@ -770,23 +978,41 @@ const AssemblyDetail = () => {
             </div>
 
             {/* History Section */}
-            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Historial de Registros
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {history.length} {history.length === 1 ? 'registro' : 'registros'} guardados
-                </p>
+            <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
+              <div className="px-6 py-5 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-sky-600 p-2 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        Historial de Registros
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-0.5 font-medium">
+                        {history.length} {history.length === 1 ? 'registro guardado' : 'registros guardados'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-sky-100 text-sky-700 px-4 py-2 rounded-full font-bold text-sm">
+                    Total: {history.length}
+                  </div>
+                </div>
               </div>
               
-              <div className="p-6">
+              <div className="p-6 bg-gray-50">
                 {history.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No hay registros guardados</p>
+                  <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 mx-auto text-gray-400 mb-3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                    </svg>
+                    <p className="text-gray-500 font-medium text-base">No hay registros guardados</p>
+                    <p className="text-gray-400 text-sm mt-2">Completa el formulario y presiona "Guardar Información"</p>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {history.map((record, index) => {
                       const fieldLabels = {
                         fechaAjuste: 'Fecha de Ajuste',
@@ -795,46 +1021,55 @@ const AssemblyDetail = () => {
                         estado: 'Estado',
                         comentarios: 'Comentarios',
                         linkReporteIR: 'Link Reporte IR',
-                        porcentajeTiempoJigs: 'Porcentaje Tiempo Jigs',
-                        nombrePrograma: 'Nombre Programa',
-                        nombreProgramaNuevo: 'Nombre Programa Nuevo',
-                        tiempoMeta: 'Tiempo Meta',
-                        tiempoAlcanzado: 'Tiempo Alcanzado'
+                        tiempoEstablecidoJig1: 'Tiempo Establecido Jig 1 (seg)',
+                        tiempoObtenidoJig1: 'Tiempo Obtenido Jig 1 (seg)',
+                        mejoraPorcentajeJig1: 'Mejora Jig 1 (%)',
+                        tiempoEstablecidoJig2: 'Tiempo Establecido Jig 2 (seg)',
+                        tiempoObtenidoJig2: 'Tiempo Obtenido Jig 2 (seg)',
+                        mejoraPorcentajeJig2: 'Mejora Jig 2 (%)',
+                        pzDestructivaJig1: 'Piezas Destructiva Jig 1',
+                        pzDestructivaJig2: 'Piezas Destructiva Jig 2',
+                        resultadoDestructivaJig1: 'Resultado Destructiva Jig 1',
+                        resultadoDestructivaJig2: 'Resultado Destructiva Jig 2'
                       };
 
                       return (
                         <div 
                           key={record.id} 
-                          className={`border rounded-lg overflow-hidden ${
+                          className={`border rounded-xl overflow-hidden transition-all hover:shadow-lg ${
                             index === 0 
-                              ? 'border-sky-300 shadow-md' 
-                              : 'border-gray-200'
+                              ? 'border-sky-400 shadow-md bg-gradient-to-br from-sky-50 to-white' 
+                              : 'border-gray-200 bg-white'
                           }`}
                         >
                           {/* Header */}
-                          <div className={`px-4 py-3 flex items-center justify-between ${
+                          <div className={`px-5 py-4 flex items-center justify-between ${
                             index === 0 
-                              ? 'bg-sky-50 border-b border-sky-200' 
-                              : 'bg-gray-50 border-b border-gray-200'
+                              ? 'bg-gradient-to-r from-sky-500 to-sky-600 border-b border-sky-400' 
+                              : 'bg-gradient-to-r from-gray-100 to-gray-50 border-b border-gray-200'
                           }`}>
                             <div className="flex items-center space-x-3">
-                              <div className={`flex items-center justify-center w-8 h-8 rounded font-semibold text-sm ${
+                              <div className={`flex items-center justify-center w-10 h-10 rounded-lg font-bold text-base shadow-md ${
                                 index === 0 
-                                  ? 'bg-sky-600 text-white' 
-                                  : 'bg-gray-400 text-white'
+                                  ? 'bg-white text-sky-600' 
+                                  : 'bg-gray-600 text-white'
                               }`}>
                                 {history.length - index}
                               </div>
                               <div>
-                                <h4 className="text-sm font-semibold text-gray-900">
+                                <h4 className={`text-sm font-bold ${
+                                  index === 0 ? 'text-white' : 'text-gray-900'
+                                }`}>
                                   Registro #{history.length - index}
                                   {index === 0 && (
-                                    <span className="ml-2 text-xs font-medium text-sky-600">
-                                      (Actual)
+                                    <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-white text-sky-600 rounded-full">
+                                      Actual
                                     </span>
                                   )}
                                 </h4>
-                                <p className="text-xs text-gray-500 mt-0.5">
+                                <p className={`text-xs mt-1 ${
+                                  index === 0 ? 'text-sky-100' : 'text-gray-500'
+                                }`}>
                                   {record.createdAt?.toLocaleDateString('es-MX', { 
                                     year: 'numeric', 
                                     month: 'long', 
@@ -847,7 +1082,11 @@ const AssemblyDetail = () => {
                             </div>
                             <button
                               onClick={() => handleDeleteRecord(record.id)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className={`p-2 rounded-lg transition-all ${
+                                index === 0 
+                                  ? 'text-white hover:bg-sky-400' 
+                                  : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                              }`}
                               title="Eliminar registro"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -857,37 +1096,54 @@ const AssemblyDetail = () => {
                           </div>
 
                           {/* Body */}
-                          <div className="p-4 bg-white">
+                          <div className="p-5">
                             {/* User Info */}
-                            <div className="mb-4 pb-3 border-b border-gray-100">
-                              <p className="text-xs text-gray-500">Guardado por</p>
-                              <p className="text-sm font-medium text-gray-900">{record.savedBy}</p>
+                            <div className="mb-5 pb-4 border-b-2 border-gray-100 flex items-center space-x-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-sky-600">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                              </svg>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium">Guardado por</p>
+                                <p className="text-sm font-semibold text-gray-900">{record.savedBy}</p>
+                              </div>
                             </div>
 
                             {/* Data Table */}
                             <div className="overflow-x-auto">
-                              <table className="min-w-full divide-y divide-gray-200">
+                              <table className="min-w-full">
                                 <tbody className="divide-y divide-gray-100">
                                   {Object.entries(record.data).map(([key, value]) => {
                                     if (!value) return null;
                                     
                                     const isEstado = key === 'estado';
+                                    const isResultadoDestructiva = key === 'resultadoDestructivaJig1' || key === 'resultadoDestructivaJig2';
+                                    const isMejora = key === 'mejoraPorcentajeJig1' || key === 'mejoraPorcentajeJig2';
                                     
                                     return (
-                                      <tr key={key} className="hover:bg-gray-50">
-                                        <td className="py-2.5 pr-4 text-sm font-medium text-gray-600 whitespace-nowrap">
+                                      <tr key={key} className="hover:bg-gray-50 transition-colors">
+                                        <td className="py-3 pr-4 text-sm font-semibold text-gray-700 align-top w-1/2">
                                           {fieldLabels[key] || key.replace(/([A-Z])/g, ' $1').trim()}
                                         </td>
-                                        <td className="py-2.5 text-sm text-gray-900">
-                                          {isEstado ? (
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
+                                        <td className="py-3 text-sm text-gray-900 font-medium">
+                                          {(isEstado || isResultadoDestructiva) ? (
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
                                               value === 'OK' 
-                                                ? 'bg-green-100 text-green-800 border border-green-200' 
+                                                ? 'bg-green-100 text-green-800 border-2 border-green-300' 
                                                 : value === 'NG'
-                                                ? 'bg-red-100 text-red-800 border border-red-200'
-                                                : 'bg-gray-100 text-gray-800 border border-gray-200'
+                                                ? 'bg-red-100 text-red-800 border-2 border-red-300'
+                                                : 'bg-gray-100 text-gray-800 border-2 border-gray-200'
                                             }`}>
                                               {value}
+                                            </span>
+                                          ) : isMejora ? (
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold ${
+                                              parseFloat(value) > 0
+                                                ? 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border-2 border-green-300'
+                                                : parseFloat(value) < 0
+                                                ? 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border-2 border-red-300'
+                                                : 'bg-gray-100 text-gray-700 border-2 border-gray-300'
+                                            }`}>
+                                              {parseFloat(value) > 0 ? '↑ ' : parseFloat(value) < 0 ? '↓ ' : ''}{value}%
                                             </span>
                                           ) : (
                                             value
@@ -902,7 +1158,7 @@ const AssemblyDetail = () => {
 
                             {/* Comparison with previous record */}
                             {index < history.length - 1 && assembly?.tipo === 'QC' && (
-                              <div className="mt-4 pt-4 border-t border-gray-200">
+                              <div className="mt-5 pt-4 border-t-2 border-gray-200">
                                 {(() => {
                                   const currentPercent = parseFloat(record.data.porcentajeObtenido);
                                   const previousPercent = parseFloat(history[index + 1].data.porcentajeObtenido);
@@ -912,10 +1168,25 @@ const AssemblyDetail = () => {
                                     const isImprovement = diff > 0;
                                     
                                     return (
-                                      <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-600">Variación vs. registro anterior:</span>
-                                        <span className={`font-semibold ${
-                                          isImprovement ? 'text-green-700' : diff < 0 ? 'text-red-700' : 'text-gray-700'
+                                      <div className={`flex items-center justify-between p-3 rounded-lg ${
+                                        isImprovement 
+                                          ? 'bg-green-50 border-l-4 border-green-500' 
+                                          : diff < 0 
+                                          ? 'bg-red-50 border-l-4 border-red-500' 
+                                          : 'bg-gray-50 border-l-4 border-gray-400'
+                                      }`}>
+                                        <span className="text-sm font-medium text-gray-700 flex items-center">
+                                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                          </svg>
+                                          Variación vs. registro anterior:
+                                        </span>
+                                        <span className={`text-base font-bold px-3 py-1 rounded-lg ${
+                                          isImprovement 
+                                            ? 'text-green-700 bg-green-100' 
+                                            : diff < 0 
+                                            ? 'text-red-700 bg-red-100' 
+                                            : 'text-gray-700 bg-gray-100'
                                         }`}>
                                           {diff > 0 ? '+' : ''}{diff.toFixed(2)}%
                                           {isImprovement ? ' ↑' : diff < 0 ? ' ↓' : ' →'}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Logo from '../assets/logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,27 +21,31 @@ const Login = () => {
       const result = await login(email, password);
       
       if (result.success) {
-        navigate('/dashboard');
+        // Redirigir según el tipo de usuario
+        if (result.userProfile?.type === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/engineer');
+        }
       } else {
         setError(result.error || 'Error al iniciar sesión');
       }
     } catch (err) {
-      setError('Error al iniciar sesión. Verifica tus credenciales.');
+      setError('Error al conectar con el servidor');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="bg-sky-900 min-h-screen flex flex-col items-center justify-center text-white p-4">
+    <div className="bg-sky-600 min-h-screen flex flex-col items-center justify-center text-white p-4">
       <div className="w-full max-w-md">
         
         {/* Logo/Encabezado */}
         <div className="mb-8 text-center">
-          <h1 className="text-5xl font-bold tracking-tight text-white drop-shadow-lg">
-            Topre
-          </h1>
-          <p className="text-sky-200 text-lg mt-2">Portal de Control de Mantenimiento</p>
+          
+          <img src={Logo} alt="Topre Logo" className="mx-auto h-16 w-auto mb-4" />
+          <p className="text-sky-200 text-lg font-bold mt-2">Portal de Control de Ingeniería</p>
         </div>
 
         {/* Tarjeta de Login */}

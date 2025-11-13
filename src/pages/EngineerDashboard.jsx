@@ -154,7 +154,7 @@ const EngineerDashboard = () => {
                     return (
                       <tr 
                         key={assembly.id}
-                        onClick={() => navigate(`/assembly/${assembly.id}`)}
+                        onClick={() => navigate(`/engineer/assembly/${assembly.id}`)}
                         className="hover:bg-gray-50 cursor-pointer transition"
                       >
                         {/* Type */}
