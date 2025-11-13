@@ -314,7 +314,7 @@ const AdminDashboard = () => {
           
           {/* KPI 3: Progreso Promedio (Activos) */}
           <div className="bg-white shadow-lg rounded-lg p-4 sm:p-5">
-            <h4 className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">Progreso Promedio (Activos)</h4>
+            <h4 className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">Porcentaje de Calidad Promedio (Activos)</h4>
             <p className="text-2xl sm:text-3xl font-semibold text-gray-800">{stats.averageProgress}%</p>
             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
               <div className="bg-sky-600 h-2.5 rounded-full" style={{ width: `${stats.averageProgress}%` }}></div>
@@ -364,7 +364,7 @@ const AdminDashboard = () => {
                   {engineer.activeAssemblies.length > 0 && (
                     <div className="mt-4 bg-white rounded-lg p-3 sm:p-4 shadow-sm">
                       <div className="flex justify-between mb-2">
-                        <span className="text-xs sm:text-sm font-semibold text-gray-700">Progreso Promedio (Activos)</span>
+                        <span className="text-xs sm:text-sm font-semibold text-gray-700">Porcentaje de Calidad Promedio (Activos)</span>
                         <span className="text-xs sm:text-sm font-bold text-sky-700">{engineer.stats.averageProgress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 shadow-inner">

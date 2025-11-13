@@ -142,7 +142,7 @@ const EngineerDashboard = () => {
                         Responsable
                       </th>
                       <th scope="col" className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Progreso
+                        Porcentaje de Calidad
                       </th>
                       <th scope="col" className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fechas
