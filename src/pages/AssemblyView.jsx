@@ -177,7 +177,7 @@ const AssemblyView = () => {
 
         {/* History Section */}
         <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-linear-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <div className="bg-sky-600 p-2 rounded-lg">
@@ -216,15 +216,15 @@ const AssemblyView = () => {
                     key={record.id} 
                     className={`border rounded-xl overflow-hidden transition-all hover:shadow-lg ${
                       index === 0 
-                        ? 'border-sky-400 shadow-md bg-gradient-to-br from-sky-50 to-white' 
+                        ? 'border-sky-400 shadow-md bg-linear-to-br from-sky-50 to-white' 
                         : 'border-gray-200 bg-white'
                     }`}
                   >
                     {/* Header */}
                     <div className={`px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 ${
                       index === 0 
-                        ? 'bg-gradient-to-r from-sky-500 to-sky-600 border-b border-sky-400' 
-                        : 'bg-gradient-to-r from-gray-100 to-gray-50 border-b border-gray-200'
+                        ? 'bg-linear-to-r from-sky-500 to-sky-600 border-b border-sky-400' 
+                        : 'bg-linear-to-r from-gray-100 to-gray-50 border-b border-gray-200'
                     }`}>
                       <div className="flex items-center space-x-2 sm:space-x-3">
                         <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-bold text-sm sm:text-base shadow-md ${
@@ -312,9 +312,9 @@ const AssemblyView = () => {
                                 ) : isMejora ? (
                                   <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold ${
                                     parseFloat(value) > 0
-                                      ? 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border-2 border-green-300'
+                                      ? 'bg-linear-to-r from-green-100 to-green-50 text-green-700 border-2 border-green-300'
                                       : parseFloat(value) < 0
-                                      ? 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border-2 border-red-300'
+                                      ? 'bg-linear-to-r from-red-100 to-red-50 text-red-700 border-2 border-red-300'
                                       : 'bg-gray-100 text-gray-700 border-2 border-gray-300'
                                   }`}>
                                     {parseFloat(value) > 0 ? '↑ ' : parseFloat(value) < 0 ? '↓ ' : ''}{value}%

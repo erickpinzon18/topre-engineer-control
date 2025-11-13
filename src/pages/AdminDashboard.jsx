@@ -337,7 +337,7 @@ const AdminDashboard = () => {
             engineers.map((engineer) => (
               <div key={engineer.id} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
                 {/* Encabezado de la Tarjeta */}
-                <div className="p-4 sm:p-6 bg-gradient-to-r from-sky-50 to-blue-50 border-b-2 border-sky-200">
+                <div className="p-4 sm:p-6 bg-linear-to-r from-sky-50 to-blue-50 border-b-2 border-sky-200">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
                     <div className="flex items-center space-x-3">
                       <div className="bg-sky-600 p-2 sm:p-3 rounded-full">
@@ -369,7 +369,7 @@ const AdminDashboard = () => {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 shadow-inner">
                         <div 
-                          className="bg-gradient-to-r from-sky-500 to-blue-600 h-2.5 sm:h-3 rounded-full transition-all duration-500 shadow-sm" 
+                          className="bg-linear-to-r from-sky-500 to-blue-600 h-2.5 sm:h-3 rounded-full transition-all duration-500 shadow-sm" 
                           style={{ width: `${engineer.stats.averageProgress}%` }}
                         ></div>
                       </div>
@@ -602,7 +602,7 @@ const AdminDashboard = () => {
 
                           {/* Fila expandible con estadísticas */}
                           {isExpanded && hasStats && (
-                            <tr className="bg-gradient-to-r from-sky-50 to-blue-50">
+                            <tr className="bg-linear-to-r from-sky-50 to-blue-50">
                               <td colSpan="6" className="px-3 sm:px-5 py-4 sm:py-6">
                                 {assembly.tipo === 'QC' && assembly.stats.firstPercent && (
                                   <div className="space-y-4">
@@ -854,7 +854,7 @@ const AdminDashboard = () => {
 
                           {/* Fila expandible con estadísticas para completados */}
                           {isExpanded && hasStats && (
-                            <tr className="bg-gradient-to-r from-green-50 to-emerald-50">
+                            <tr className="bg-linear-to-r from-green-50 to-emerald-50">
                               <td colSpan="6" className="px-5 py-6">
                                 {assembly.tipo === 'QC' && assembly.stats.firstPercent && (
                                   <div className="space-y-4">

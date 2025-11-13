@@ -52,7 +52,7 @@ const Login = () => {
         <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           
           {/* Header de la tarjeta */}
-          <div className="bg-gradient-to-r from-sky-600 to-blue-600 px-6 py-5 border-b-4 border-sky-700">
+          <div className="bg-linear-to-r from-sky-600 to-blue-600 px-6 py-5 border-b-4 border-sky-700">
             <h2 className="text-xl font-bold text-white text-center flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 mr-2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
