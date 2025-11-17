@@ -131,6 +131,17 @@ const AssemblyDetail = () => {
     }
   };
 
+  const handleAssemblyFieldChange = async (field, value) => {
+    try {
+      const docRef = doc(db, 'assemblies', id);
+      await updateDoc(docRef, { [field]: value });
+      setAssembly(prev => ({ ...prev, [field]: value }));
+    } catch (error) {
+      console.error('Error actualizando campo:', error);
+      alert('Error al actualizar el campo');
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -138,13 +149,14 @@ const AssemblyDetail = () => {
       [name]: value
     }));
 
-    // Si es QC, calcular automáticamente el estado basado en el porcentaje obtenido
+    // Si es QC, calcular automáticamente el estado basado en el porcentaje obtenido y el meta
     if (assembly?.tipo === 'QC' && name === 'porcentajeObtenido') {
       const porcentaje = parseFloat(value);
+      const meta = parseFloat(assembly.porcentajeMeta || '97');
       if (!isNaN(porcentaje)) {
         setFormData(prev => ({
           ...prev,
-          estado: porcentaje >= 97 ? 'OK' : 'NG'
+          estado: porcentaje >= meta ? 'OK' : 'NG'
         }));
       }
     }
@@ -591,18 +603,38 @@ const AssemblyDetail = () => {
                   {/* QC Fields */}
                   {assembly.tipo === 'QC' && (
                     <>
-                      {/* Meta Indicator */}
+                      {/* Meta Indicator - Editable */}
                       <div className="bg-sky-50 border-l-4 border-sky-500 p-3 sm:p-4 mb-4">
-                        <div className="flex items-start sm:items-center">
-                          <div className="shrink-0">
-                            <svg className="h-5 w-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
+                        <div className="flex items-start sm:items-center justify-between">
+                          <div className="flex items-start sm:items-center">
+                            <div className="shrink-0">
+                              <svg className="h-5 w-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-xs sm:text-sm text-sky-700">
+                                <span className="font-semibold">Porcentaje Meta: {assembly.porcentajeMeta || '97'}%</span> - Alcanzar este valor para estado OK
+                              </p>
+                            </div>
                           </div>
-                          <div className="ml-3">
-                            <p className="text-xs sm:text-sm text-sky-700">
-                              <span className="font-semibold">Porcentaje Meta: 97%</span> - Alcanzar este valor para estado OK
-                            </p>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              value={assembly.porcentajeMeta || ''}
+                              onChange={(e) => handleAssemblyFieldChange('porcentajeMeta', e.target.value)}
+                              onBlur={(e) => {
+                                if (!e.target.value) {
+                                  handleAssemblyFieldChange('porcentajeMeta', '97');
+                                }
+                              }}
+                              placeholder="97"
+                              className="w-16 px-2 py-1 text-sm border border-sky-300 rounded focus:ring-sky-500 focus:border-sky-500"
+                            />
+                            <span className="text-xs text-sky-600">%</span>
                           </div>
                         </div>
                       </div>
@@ -1264,6 +1296,15 @@ const AssemblyDetail = () => {
                   <li className="py-2.5 sm:py-3 flex justify-between text-xs sm:text-sm">
                     <span className="font-medium text-gray-600">Deadline:</span>
                     <span className="text-gray-900 text-right ml-2">{assembly.fechaDeadline}</span>
+                  </li>
+                  <li className="py-2.5 sm:py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs sm:text-sm">
+                    <span className="font-medium text-sky-600 mb-1 sm:mb-0">Fecha de Préstamo:</span>
+                    <input
+                      type="date"
+                      value={assembly.fechaPrestamo || ''}
+                      onChange={(e) => handleAssemblyFieldChange('fechaPrestamo', e.target.value)}
+                      className="px-2 py-1 border border-sky-300 rounded focus:ring-sky-500 focus:border-sky-500 text-right"
+                    />
                   </li>
                   <li className="py-2.5 sm:py-3 flex justify-between text-xs sm:text-sm">
                     <span className={`font-medium ${daysRemaining < 7 ? 'text-red-600' : 'text-gray-600'}`}>

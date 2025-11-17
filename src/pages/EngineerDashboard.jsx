@@ -3,6 +3,7 @@ import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/fir
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import AssemblyModal from '../components/AssemblyModal';
+import Calendar from '../components/Calendar';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 
@@ -123,41 +124,47 @@ const EngineerDashboard = () => {
       <Navbar />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+      <main className="container mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header and Action Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-6">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
-            Mis Ensambles
-          </h2>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-sky-700 hover:bg-sky-800 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition duration-300 w-full sm:w-auto"
-          >
-            {/* Plus Icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span className="hidden sm:inline">Registrar Nuevo Ensamble</span>
-            <span className="sm:hidden">Nuevo Ensamble</span>
-          </button>
-        </div>
-
-        {assemblies.length === 0 ? (
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div className="text-center py-12 px-4">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-              </svg>
-              <p className="text-gray-500 text-base sm:text-lg">No tienes ensambles registrados</p>
-              <p className="text-gray-400 text-sm mt-2">Haz clic en "Registrar Nuevo Ensamble" para comenzar</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
+        {/* Layout con Calendario a la derecha en desktop */}
+        <div className="space-y-6 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0">
+          
+          {/* Main Column - Ensambles */}
+          <div className="lg:col-span-9 space-y-6">
             
-            {/* Tabla QC Level Up */}
-            {qcAssemblies.length > 0 && (
+            {/* Section Header and Action Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
+                Mis Ensambles
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center justify-center gap-2 bg-sky-700 hover:bg-sky-800 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition duration-300 w-full sm:w-auto"
+              >
+                {/* Plus Icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span className="hidden sm:inline">Registrar Nuevo Ensamble</span>
+                <span className="sm:hidden">Nuevo Ensamble</span>
+              </button>
+            </div>
+
+            {assemblies.length === 0 ? (
+              <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+                <div className="text-center py-12 px-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                  </svg>
+                  <p className="text-gray-500 text-base sm:text-lg">No tienes ensambles registrados</p>
+                  <p className="text-gray-400 text-sm mt-2">Haz clic en "Registrar Nuevo Ensamble" para comenzar</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+            
+                {/* Tabla QC Level Up */}
+                {qcAssemblies.length > 0 && (
               <div className="bg-white shadow-lg rounded-lg overflow-hidden border-l-4 border-blue-500">
                 <div className="px-4 sm:px-6 py-4 bg-linear-to-r from-blue-50 to-sky-50 border-b-2 border-blue-200">
                   <div className="flex items-center space-x-3">
@@ -193,6 +200,8 @@ const EngineerDashboard = () => {
                         const progress = calculateProgress(assembly);
                         const lastRecord = assembly.lastRecord || {};
                         const estado = lastRecord.estado || 'Pendiente';
+                        const meta = parseFloat(assembly.porcentajeMeta || '97');
+                        const porcentaje = lastRecord.porcentajeObtenido || 0;
                         
                         return (
                           <tr 
@@ -217,20 +226,20 @@ const EngineerDashboard = () => {
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center space-x-2">
                                 <span className={`text-sm font-bold ${
-                                  (lastRecord.porcentajeObtenido || 0) >= 97 ? 'text-green-600' :
-                                  (lastRecord.porcentajeObtenido || 0) >= 90 ? 'text-blue-600' :
+                                  porcentaje >= meta ? 'text-green-600' :
+                                  porcentaje >= (meta * 0.93) ? 'text-blue-600' :
                                   'text-red-600'
                                 }`}>
-                                  {lastRecord.porcentajeObtenido || '0'}%
+                                  {porcentaje}%
                                 </span>
                                 <div className="w-20 bg-gray-200 rounded-full h-2">
                                   <div 
                                     className={`h-2 rounded-full ${
-                                      (lastRecord.porcentajeObtenido || 0) >= 97 ? 'bg-green-500' :
-                                      (lastRecord.porcentajeObtenido || 0) >= 90 ? 'bg-blue-500' :
+                                      porcentaje >= meta ? 'bg-green-500' :
+                                      porcentaje >= (meta * 0.93) ? 'bg-blue-500' :
                                       'bg-red-500'
                                     }`}
-                                    style={{ width: `${Math.min(lastRecord.porcentajeObtenido || 0, 100)}%` }}
+                                    style={{ width: `${Math.min(porcentaje, 100)}%` }}
                                   ></div>
                                 </div>
                               </div>
@@ -271,6 +280,8 @@ const EngineerDashboard = () => {
                   {qcAssemblies.map((assembly) => {
                     const lastRecord = assembly.lastRecord || {};
                     const estado = lastRecord.estado || 'Pendiente';
+                    const meta = parseFloat(assembly.porcentajeMeta || '97');
+                    const porcentaje = lastRecord.porcentajeObtenido || 0;
                     
                     return (
                       <div
@@ -306,21 +317,21 @@ const EngineerDashboard = () => {
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-600 font-medium">Porcentaje Actual</span>
                             <span className={`text-sm font-bold ${
-                              (lastRecord.porcentajeObtenido || 0) >= 97 ? 'text-green-600' :
-                              (lastRecord.porcentajeObtenido || 0) >= 90 ? 'text-blue-600' :
+                              porcentaje >= meta ? 'text-green-600' :
+                              porcentaje >= (meta * 0.93) ? 'text-blue-600' :
                               'text-red-600'
                             }`}>
-                              {lastRecord.porcentajeObtenido || '0'}%
+                              {porcentaje}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full ${
-                                (lastRecord.porcentajeObtenido || 0) >= 97 ? 'bg-green-500' :
-                                (lastRecord.porcentajeObtenido || 0) >= 90 ? 'bg-blue-500' :
+                                porcentaje >= meta ? 'bg-green-500' :
+                                porcentaje >= (meta * 0.93) ? 'bg-blue-500' :
                                 'bg-red-500'
                               }`}
-                              style={{ width: `${Math.min(lastRecord.porcentajeObtenido || 0, 100)}%` }}
+                              style={{ width: `${Math.min(porcentaje, 100)}%` }}
                             ></div>
                           </div>
                         </div>
@@ -350,10 +361,10 @@ const EngineerDashboard = () => {
                   })}
                 </div>
               </div>
-            )}
+                )}
 
-            {/* Tabla TEACH */}
-            {teachAssemblies.length > 0 && (
+                {/* Tabla TEACH */}
+                {teachAssemblies.length > 0 && (
               <div className="bg-white shadow-lg rounded-lg overflow-hidden border-l-4 border-green-500">
                 <div className="px-4 sm:px-6 py-4 bg-linear-to-r from-green-50 to-emerald-50 border-b-2 border-green-200">
                   <div className="flex items-center space-x-3">
@@ -576,10 +587,18 @@ const EngineerDashboard = () => {
                   })}
                 </div>
               </div>
-            )}
+                )}
 
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Sidebar Column - Calendario */}
+          <div className="lg:col-span-3">
+            <Calendar assemblies={assemblies} />
+          </div>
+
+        </div>
       </main>
 
       {/* Assembly Modal */}

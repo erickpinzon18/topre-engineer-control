@@ -15,7 +15,9 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
     numero: '',
     tipo: 'QC',
     fechaInicio: new Date().toISOString().split('T')[0],
-    fechaDeadline: getDefaultDeadline()
+    fechaDeadline: getDefaultDeadline(),
+    fechaPrestamo: '',
+    porcentajeMeta: '97'
   });
 
   const handleChange = (e) => {
@@ -35,7 +37,9 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
       numero: '',
       tipo: 'QC',
       fechaInicio: new Date().toISOString().split('T')[0],
-      fechaDeadline: getDefaultDeadline()
+      fechaDeadline: getDefaultDeadline(),
+      fechaPrestamo: '',
+      porcentajeMeta: '97'
     });
   };
 
@@ -202,6 +206,44 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
                         />
                       </div>
                     </div>
+
+                    {/* Row 5: Fecha de Préstamo */}
+                    <div>
+                      <label htmlFor="fechaPrestamo" className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de Préstamo de Máquina
+                      </label>
+                      <input
+                        type="date"
+                        name="fechaPrestamo"
+                        id="fechaPrestamo"
+                        value={formData.fechaPrestamo}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Fecha en que producción para la máquina para revisión</p>
+                    </div>
+
+                    {/* Row 6: Porcentaje Meta (solo para QC) */}
+                    {formData.tipo === 'QC' && (
+                      <div>
+                        <label htmlFor="porcentajeMeta" className="block text-sm font-medium text-gray-700 mb-1">
+                          Porcentaje Meta
+                        </label>
+                        <input
+                          type="number"
+                          name="porcentajeMeta"
+                          id="porcentajeMeta"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={formData.porcentajeMeta}
+                          onChange={handleChange}
+                          placeholder="97"
+                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Por defecto es 97% si se deja vacío</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Modal Footer */}
