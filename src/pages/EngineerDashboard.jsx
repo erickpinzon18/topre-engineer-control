@@ -4,6 +4,7 @@ import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import AssemblyModal from '../components/AssemblyModal';
 import Calendar from '../components/Calendar';
+import ReportModal from '../components/ReportModal';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ const EngineerDashboard = () => {
   const { currentUser, userProfile, logout } = useAuth();
   const [assemblies, setAssemblies] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -137,17 +139,29 @@ const EngineerDashboard = () => {
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
                 Mis Ensambles
               </h2>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="flex items-center justify-center gap-2 bg-sky-700 hover:bg-sky-800 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition duration-300 w-full sm:w-auto"
-              >
-                {/* Plus Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                <span className="hidden sm:inline">Registrar Nuevo Ensamble</span>
-                <span className="sm:hidden">Nuevo Ensamble</span>
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={() => setIsReportModalOpen(true)}
+                  className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition duration-300"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  <span className="hidden sm:inline">Generar Reporte</span>
+                  <span className="sm:hidden">Reporte</span>
+                </button>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center justify-center gap-2 bg-sky-700 hover:bg-sky-800 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition duration-300"
+                >
+                  {/* Plus Icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  <span className="hidden sm:inline">Registrar Nuevo Ensamble</span>
+                  <span className="sm:hidden">Nuevo Ensamble</span>
+                </button>
+              </div>
             </div>
 
             {assemblies.length === 0 ? (
@@ -608,6 +622,15 @@ const EngineerDashboard = () => {
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleCreateAssembly}
           userName={userProfile?.name || currentUser.email}
+        />
+      )}
+
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          assemblies={assemblies}
         />
       )}
     </div>
