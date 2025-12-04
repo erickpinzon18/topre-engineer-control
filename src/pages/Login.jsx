@@ -173,7 +173,7 @@ const Login = () => {
         {/* Footer */}
         <div className="mt-6 text-center">
           <p className="text-gray-500 text-sm">
-            © 2025 Topre. Todos los derechos reservados.
+            © 2025. Todos los derechos reservados.
           </p>
           <p className="text-gray-400 text-xs mt-1">
             Sistema de Control de Ingeniería v1.0 - By 
