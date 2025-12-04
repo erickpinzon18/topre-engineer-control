@@ -43,7 +43,7 @@ const Login = () => {
         
         {/* Logo/Encabezado */}
         <div className="mb-6 text-center">
-          <img src={Logo} alt="Topre Logo" className="mx-auto h-20 w-auto mb-4" />
+          {/* <img src={Logo} alt="Topre Logo" className="mx-auto h-20 w-auto mb-4" /> */}
           <h1 className="text-2xl font-bold text-gray-800 mb-1">Sistema de Control de Ingeniería</h1>
           <p className="text-gray-600 text-sm">Gestión de Ensambles</p>
         </div>
