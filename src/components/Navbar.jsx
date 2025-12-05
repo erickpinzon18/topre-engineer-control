@@ -14,7 +14,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
           <div className="shrink-0 flex items-center">
-            <img src={Logo} alt="Topre Logo" className="h-7 sm:h-9 w-auto" />
+            {/* <img src={Logo} alt="Topre Logo" className="h-7 sm:h-9 w-auto" /> */}
             <span className="ml-2 sm:ml-5 text-gray-500 font-medium text-sm sm:text-base hidden xs:inline">
               Portal de Ingeniería
             </span>

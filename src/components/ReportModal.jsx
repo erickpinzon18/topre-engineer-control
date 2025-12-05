@@ -56,7 +56,7 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
             </div>
             <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 28px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Reporte de Ensambles</h1>
             <div style="background: rgba(255,255,255,0.15); display: inline-block; padding: 6px 16px; border-radius: 20px; margin-bottom: 8px;">
-              <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 600;">TOPRE - Control de Ingeniería</p>
+              <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 600;">Control de Ingeniería</p>
             </div>
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.3);">
               <p style="color: #e0f2fe; margin: 4px 0; font-size: 12px;">📅 ${new Date().toLocaleDateString('es-MX', { 
@@ -76,7 +76,7 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
           
           <!-- Footer -->
           <div style="margin-top: 30px; padding: 16px; background: #f8fafc; border-top: 3px solid #0284c7; text-align: center; border-radius: 8px;">
-            <p style="margin: 0 0 6px 0; color: #64748b; font-size: 10px; font-weight: 600;">© 2025 Topre. Todos los derechos reservados.</p>
+            <p style="margin: 0 0 6px 0; color: #64748b; font-size: 10px; font-weight: 600;">© 2025. Todos los derechos reservados.</p>
             <p style="margin: 0; color: #94a3b8; font-size: 9px;">Sistema de Control de Ingeniería v1.0 - ByUphy.mx</p>
           </div>
         </div>
@@ -286,14 +286,14 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
       selectedAssemblies.includes(a.id)
     );
 
-    const subject = `Reporte de Ensambles TOPRE - ${new Date().toLocaleDateString('es-MX')}`;
+    const subject = `Reporte de Ensambles - ${new Date().toLocaleDateString('es-MX')}`;
     
     // Crear un resumen simple para el email
     const qcCount = selectedData.filter(a => a.tipo === 'QC').length;
     const teachCount = selectedData.filter(a => a.tipo === 'TEACH').length;
     
     const bodyText = `
-Reporte de Ensambles - TOPRE
+Reporte de Ensambles - 
 ${'='.repeat(50)}
 
 Fecha: ${new Date().toLocaleDateString('es-MX', { 
@@ -312,7 +312,7 @@ Resumen:
 NOTA: Este es un resumen del reporte. Para ver el reporte completo con todos los detalles y formato profesional, por favor genera y descarga el PDF desde el sistema.
 
 ${'='.repeat(50)}
-© 2025 Topre. Todos los derechos reservados.
+© 2025. Todos los derechos reservados.
 Sistema de Control de Ingeniería v1.0 - ByUphy.mx
     `.trim();
 

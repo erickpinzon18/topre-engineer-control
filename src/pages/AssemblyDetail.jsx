@@ -512,7 +512,7 @@ const AssemblyDetail = () => {
           hour: '2-digit',
           minute: '2-digit'
         })}</p>
-        <p style="margin: 5px 0; font-weight: 600; color: #64748b;">Sistema de Control de Ingeniería TOPRE</p>
+        <p style="margin: 5px 0; font-weight: 600; color: #64748b;">Sistema de Control de Ingeniería</p>
     </div>
 
 </body>
