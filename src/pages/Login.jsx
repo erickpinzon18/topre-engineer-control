@@ -12,10 +12,6 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log('Email actualizado:', email, password);
-  }, [email, password]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
