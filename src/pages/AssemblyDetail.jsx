@@ -808,6 +808,20 @@ const AssemblyDetail = () => {
                             <p className="mt-1 text-xs text-gray-500">Calculado automáticamente</p>
                           </div>
                         </div>
+
+                        <div className="mt-3">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Comentarios Jig 1
+                          </label>
+                          <textarea
+                            name="comentariosJig1"
+                            value={formData.comentariosJig1 || ''}
+                            onChange={handleChange}
+                            rows="2"
+                            placeholder="Observaciones del Jig 1..."
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
                       </div>
 
                       {/* Comparación de Tiempos - Jig 2 */}
@@ -867,6 +881,20 @@ const AssemblyDetail = () => {
                             </div>
                             <p className="mt-1 text-xs text-gray-500">Calculado automáticamente</p>
                           </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Comentarios Jig 2
+                          </label>
+                          <textarea
+                            name="comentariosJig2"
+                            value={formData.comentariosJig2 || ''}
+                            onChange={handleChange}
+                            rows="2"
+                            placeholder="Observaciones del Jig 2..."
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                          />
                         </div>
                       </div>
 
@@ -1062,7 +1090,9 @@ const AssemblyDetail = () => {
                         pzDestructivaJig1: 'Piezas Destructiva Jig 1',
                         pzDestructivaJig2: 'Piezas Destructiva Jig 2',
                         resultadoDestructivaJig1: 'Resultado Destructiva Jig 1',
-                        resultadoDestructivaJig2: 'Resultado Destructiva Jig 2'
+                        resultadoDestructivaJig2: 'Resultado Destructiva Jig 2',
+                        comentariosJig1: 'Comentarios Jig 1',
+                        comentariosJig2: 'Comentarios Jig 2'
                       };
 
                       return (
