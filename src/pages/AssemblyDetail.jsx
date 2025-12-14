@@ -4,6 +4,7 @@ import { doc, getDoc, updateDoc, collection, addDoc, query, orderBy, getDocs, de
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
+import PhotoUploader from '../components/PhotoUploader';
 
 const AssemblyDetail = () => {
   const { id } = useParams();
@@ -55,22 +56,40 @@ const AssemblyDetail = () => {
           emisionPuntoCambio: '',
           estado: 'Pendiente',
           comentarios: '',
-          linkReporteIR: ''
+          linkReporteIR: '',
+          fotos: []
         });
         return historyData.length > 0;
       } else if (assemblyType === 'TEACH') {
         setFormData({
+          // Toggle para sección de tiempos (GORIKA)
+          mostrarComparacionTiempos: false,
+          // Comparación de tiempos Jig 1
           tiempoEstablecidoJig1: '',
           tiempoObtenidoJig1: '',
           mejoraPorcentajeJig1: '',
+          // Comparación de tiempos Jig 2
           tiempoEstablecidoJig2: '',
           tiempoObtenidoJig2: '',
           mejoraPorcentajeJig2: '',
+          // Checklist de validación (nuevos campos)
+          trayectoriaPuntasLimite: '',      // OK / NG
+          trayectoriaPuntasNuevas: '',      // OK / NG
+          modificacionBloquesJig: '',        // SI / NO
+          juicioPuntosSoldadura: '',         // OK / NG
+          condicionSoldadura: '',            // OK / NG
+          liberacionJig: '',                 // SI / NO
+          // Campos existentes
           emisionPuntoCambio: '',
           pzDestructivaJig1: '',
           pzDestructivaJig2: '',
           resultadoDestructivaJig1: '',
-          resultadoDestructivaJig2: ''
+          resultadoDestructivaJig2: '',
+          comentarios: '',  // Comentarios generales
+          fotos: [],  // Evidencia fotográfica
+          // Estado y porcentaje calculados
+          estado: 'Pendiente',
+          porcentajeObtenido: 0
         });
         return historyData.length > 0;
       }
@@ -102,27 +121,39 @@ const AssemblyDetail = () => {
               emisionPuntoCambio: '',
               estado: 'Pendiente',
               comentarios: '',
-              linkReporteIR: ''
+              linkReporteIR: '',
+              fotos: []
             });
           } else if (data.tipo === 'TEACH') {
             setFormData({
+              mostrarComparacionTiempos: false,
               tiempoEstablecidoJig1: '',
               tiempoObtenidoJig1: '',
               mejoraPorcentajeJig1: '',
               tiempoEstablecidoJig2: '',
               tiempoObtenidoJig2: '',
               mejoraPorcentajeJig2: '',
+              trayectoriaPuntasLimite: '',
+              trayectoriaPuntasNuevas: '',
+              modificacionBloquesJig: '',
+              juicioPuntosSoldadura: '',
+              condicionSoldadura: '',
+              liberacionJig: '',
               emisionPuntoCambio: '',
               pzDestructivaJig1: '',
               pzDestructivaJig2: '',
               resultadoDestructivaJig1: '',
-              resultadoDestructivaJig2: ''
+              resultadoDestructivaJig2: '',
+              comentarios: '',
+              fotos: [],
+              estado: 'Pendiente',
+              porcentajeObtenido: 0
             });
           }
         }
       } else {
         alert('Ensamble no encontrado');
-        navigate('/engineer');
+        navigate('/engineer/assy');
       }
     } catch (error) {
       console.error('Error cargando ensamble:', error);
@@ -190,6 +221,64 @@ const AssemblyDetail = () => {
           }));
         }
       }
+
+      // Calcular porcentaje y estado automáticamente para TEACH
+      // basándose en los 6 campos de validación
+      const calcularPorcentajeTEACH = () => {
+        const campos = [
+          { campo: 'trayectoriaPuntasLimite', valorOK: 'OK' },
+          { campo: 'trayectoriaPuntasNuevas', valorOK: 'OK' },
+          { campo: 'modificacionBloquesJig', valorOK: 'SI' },
+          { campo: 'juicioPuntosSoldadura', valorOK: 'OK' },
+          { campo: 'condicionSoldadura', valorOK: 'OK' },
+          { campo: 'liberacionJig', valorOK: 'SI' }
+        ];
+
+        // Usar el valor actual si está siendo cambiado, de lo contrario usar formData
+        const getValor = (campo) => {
+          if (name === campo) return value;
+          return formData[campo];
+        };
+
+        let cumplidos = 0;
+        let total = 0;
+
+        campos.forEach(({ campo, valorOK }) => {
+          const val = getValor(campo);
+          if (val) {
+            total++;
+            if (val === valorOK) {
+              cumplidos++;
+            }
+          }
+        });
+
+        if (total === 0) return { porcentaje: 0, estado: 'Pendiente' };
+
+        const porcentaje = Math.round((cumplidos / 6) * 100);
+        
+        // OK si cumple 5 o 6 de 6 (puede faltar máximo 1)
+        // Pendiente si faltan 2 o más
+        const estado = cumplidos >= 5 ? 'OK' : 'Pendiente';
+
+        return { porcentaje, estado };
+      };
+
+      // Si se cambió alguno de los campos de validación, recalcular
+      const camposValidacion = [
+        'trayectoriaPuntasLimite', 'trayectoriaPuntasNuevas', 
+        'modificacionBloquesJig', 'juicioPuntosSoldadura', 
+        'condicionSoldadura', 'liberacionJig'
+      ];
+
+      if (camposValidacion.includes(name)) {
+        const { porcentaje, estado } = calcularPorcentajeTEACH();
+        setFormData(prev => ({
+          ...prev,
+          porcentajeObtenido: porcentaje,
+          estado: estado
+        }));
+      }
     }
   };
 
@@ -252,21 +341,33 @@ const AssemblyDetail = () => {
           emisionPuntoCambio: '',
           estado: 'Pendiente',
           comentarios: '',
-          linkReporteIR: ''
+          linkReporteIR: '',
+          fotos: []
         });
       } else if (assembly?.tipo === 'TEACH') {
         setFormData({
+          mostrarComparacionTiempos: false,
           tiempoEstablecidoJig1: '',
           tiempoObtenidoJig1: '',
           mejoraPorcentajeJig1: '',
           tiempoEstablecidoJig2: '',
           tiempoObtenidoJig2: '',
           mejoraPorcentajeJig2: '',
+          trayectoriaPuntasLimite: '',
+          trayectoriaPuntasNuevas: '',
+          modificacionBloquesJig: '',
+          juicioPuntosSoldadura: '',
+          condicionSoldadura: '',
+          liberacionJig: '',
           emisionPuntoCambio: '',
           pzDestructivaJig1: '',
           pzDestructivaJig2: '',
           resultadoDestructivaJig1: '',
-          resultadoDestructivaJig2: ''
+          resultadoDestructivaJig2: '',
+          comentarios: '',
+          fotos: [],
+          estado: 'Pendiente',
+          porcentajeObtenido: 0
         });
       }
       
@@ -429,6 +530,8 @@ const AssemblyDetail = () => {
                           <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                               ${Object.entries(record.data).map(([key, value]) => {
                                 if (!value) return '';
+                                // Excluir campos que son arrays u objetos (como fotos)
+                                if (Array.isArray(value) || (typeof value === 'object' && value !== null)) return '';
                                 const label = fieldLabels[key] || key.replace(/([A-Z])/g, ' $1').trim();
                                 const isEstado = key === 'estado';
                                 const isResultadoDestructiva = key === 'resultadoDestructivaJig1' || key === 'resultadoDestructivaJig2';
@@ -560,7 +663,7 @@ const AssemblyDetail = () => {
         {/* Back Link */}
         <div className="mb-4">
           <button
-            onClick={() => navigate('/engineer')}
+            onClick={() => navigate('/engineer/assy')}
             className="text-sm font-medium text-sky-700 hover:text-sky-900 flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
@@ -702,6 +805,14 @@ const AssemblyDetail = () => {
                         </div>
                       </div>
 
+                      {/* Evidencia Fotográfica */}
+                      <PhotoUploader
+                        userId={currentUser?.uid}
+                        assemblyId={id}
+                        photos={formData.fotos || []}
+                        onPhotosChange={(newPhotos) => setFormData(prev => ({ ...prev, fotos: newPhotos }))}
+                      />
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Comentarios
@@ -716,7 +827,7 @@ const AssemblyDetail = () => {
                         />
                       </div>
 
-                      <div>
+                      {/* <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Link de Reporte IR
                         </label>
@@ -728,7 +839,7 @@ const AssemblyDetail = () => {
                           placeholder="https://..."
                           className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
                         />
-                      </div>
+                      </div> */}
                     </>
                   )}
 
@@ -736,25 +847,288 @@ const AssemblyDetail = () => {
                   {assembly.tipo === 'TEACH' && (
                     <>
                       <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 mb-4">
-                        <div className="flex items-start sm:items-center">
-                          <div className="shrink-0">
-                            <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
+                        <div className="flex items-start sm:items-center justify-between">
+                          <div className="flex items-start sm:items-center">
+                            <div className="shrink-0">
+                              <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-xs sm:text-sm text-green-700">
+                                <span className="font-semibold">Proceso TEACH</span> - Complete todos los campos de validación para obtener estado OK
+                              </p>
+                            </div>
                           </div>
-                          <div className="ml-3">
-                            <p className="text-xs sm:text-sm text-green-700">
-                              <span className="font-semibold">Proceso TEACH</span> - Registra la información del proceso de enseñanza del robot
-                            </p>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-3 py-1 text-sm font-bold rounded-full border-2 ${
+                              formData.estado === 'OK' 
+                                ? 'bg-green-100 text-green-800 border-green-300' 
+                                : formData.estado === 'NG'
+                                ? 'bg-red-100 text-red-800 border-red-300'
+                                : 'bg-gray-100 text-gray-700 border-gray-300'
+                            }`}>
+                              {formData.porcentajeObtenido || 0}% - {formData.estado || 'Pendiente'}
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Comparación de Tiempos - Jig 1 */}
-                      <div className="mb-6 p-3 sm:p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                        <h4 className="text-xs sm:text-sm font-semibold text-blue-900 mb-3 flex items-center">
-                          <span className="bg-blue-600 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
-                          Jig 1 - Comparación de Tiempos
+                      {/* Barra de Progreso de Validación */}
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-sm font-semibold text-gray-800">Progreso de Validación</h4>
+                          <span className={`text-lg font-bold ${
+                            formData.porcentajeObtenido === 100 ? 'text-green-600' : 
+                            formData.porcentajeObtenido > 0 ? 'text-orange-600' : 'text-gray-400'
+                          }`}>{formData.porcentajeObtenido || 0}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div 
+                            className={`h-3 rounded-full transition-all duration-300 ${
+                              formData.porcentajeObtenido === 100 ? 'bg-green-500' : 
+                              formData.porcentajeObtenido > 0 ? 'bg-orange-500' : 'bg-gray-300'
+                            }`}
+                            style={{ width: `${formData.porcentajeObtenido || 0}%` }}
+                          ></div>
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Si todos los campos están en OK/SI, el progreso será 100% y el estado OK
+                        </p>
+                      </div>
+
+                      {/* Checklist de Validación */}
+                      <div className="mb-6 p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border-2 border-green-200">
+                        <h4 className="text-md font-bold text-green-900 mb-4 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-2 text-green-600">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Checklist de Validación
+                        </h4>
+                        
+                        <div className="space-y-4">
+                          {/* 3.1 Trayectoria puntas límite */}
+                          <div className="p-3 bg-white rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                              3.1 Trayectoria con puntas al límite
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, trayectoriaPuntasLimite: 'OK' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.trayectoriaPuntasLimite === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, trayectoriaPuntasLimite: 'NG' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.trayectoriaPuntasLimite === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 3.2 Trayectoria puntas nuevas */}
+                          <div className="p-3 bg-white rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                              3.2 Trayectoria con puntas nuevas
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, trayectoriaPuntasNuevas: 'OK' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.trayectoriaPuntasNuevas === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, trayectoriaPuntasNuevas: 'NG' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.trayectoriaPuntasNuevas === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 3.3 Modificación de bloques */}
+                          <div className="p-3 bg-white rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                              3.3 ¿Hubo modificación de bloques o componentes de jig para mejorar la trayectoria?
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, modificacionBloquesJig: 'SI' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.modificacionBloquesJig === 'SI'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                SÍ
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, modificacionBloquesJig: 'NO' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.modificacionBloquesJig === 'NO'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NO
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 3.4 Juicio puntos soldadura */}
+                          <div className="p-3 bg-white rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                              3.4 Juicio de puntos de soldadura con metrología
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, juicioPuntosSoldadura: 'OK' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.juicioPuntosSoldadura === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, juicioPuntosSoldadura: 'NG' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.juicioPuntosSoldadura === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 3.5 Condición soldadura */}
+                          <div className="p-3 bg-white rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                              3.5 Condición de soldadura
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, condicionSoldadura: 'OK' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.condicionSoldadura === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, condicionSoldadura: 'NG' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.condicionSoldadura === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* 3.6 Liberación JIG */}
+                          <div className="p-3 bg-white rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-800 mb-2">
+                              3.6 Liberación de JIG's por HVT/LT
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, liberacionJig: 'SI' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.liberacionJig === 'SI'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                SÍ
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, liberacionJig: 'NO' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.liberacionJig === 'NO'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NO
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Toggle para Comparación de Tiempos (GORIKA) */}
+                      <div className="mb-6 p-4 bg-orange-50 rounded-lg border-2 border-orange-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-2 text-orange-600">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                              <h4 className="text-sm font-bold text-orange-900">Comparación de Tiempos (GORIKA)</h4>
+                              <p className="text-xs text-orange-600">Opcional - Activar solo si se requiere registrar tiempos</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, mostrarComparacionTiempos: !prev.mostrarComparacionTiempos }))}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                              formData.mostrarComparacionTiempos ? 'bg-orange-600' : 'bg-gray-300'
+                            }`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              formData.mostrarComparacionTiempos ? 'translate-x-6' : 'translate-x-1'
+                            }`} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Comparación de Tiempos - Solo si está activado */}
+                      {formData.mostrarComparacionTiempos && (
+                        <>
+                          {/* Comparación de Tiempos - Jig 1 */}
+                          <div className="mb-6 p-3 sm:p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                            <h4 className="text-xs sm:text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                              <span className="bg-blue-600 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                              Jig 1 - Comparación de Tiempos
                         </h4>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -807,20 +1181,6 @@ const AssemblyDetail = () => {
                             </div>
                             <p className="mt-1 text-xs text-gray-500">Calculado automáticamente</p>
                           </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Comentarios Jig 1
-                          </label>
-                          <textarea
-                            name="comentariosJig1"
-                            value={formData.comentariosJig1 || ''}
-                            onChange={handleChange}
-                            rows="2"
-                            placeholder="Observaciones del Jig 1..."
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                          />
                         </div>
                       </div>
 
@@ -882,23 +1242,10 @@ const AssemblyDetail = () => {
                             <p className="mt-1 text-xs text-gray-500">Calculado automáticamente</p>
                           </div>
                         </div>
-
-                        <div className="mt-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Comentarios Jig 2
-                          </label>
-                          <textarea
-                            name="comentariosJig2"
-                            value={formData.comentariosJig2 || ''}
-                            onChange={handleChange}
-                            rows="2"
-                            placeholder="Observaciones del Jig 2..."
-                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
-                          />
-                        </div>
                       </div>
 
-                      <div>
+                      {/* Emisión de Punto de Cambio - dentro de GORIKA */}
+                      <div className="mt-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Emisión de Punto de Cambio
                         </label>
@@ -908,11 +1255,36 @@ const AssemblyDetail = () => {
                           value={formData.emisionPuntoCambio || ''}
                           onChange={handleChange}
                           placeholder="Folio del punto de cambio (si aplica por reducción de tiempo)"
-                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
                         />
                         <p className="mt-1 text-xs text-gray-500">
                           Solo aplica si se redujo tiempo en el proceso
                         </p>
+                      </div>
+                        </>
+                      )}
+
+                      {/* Evidencia Fotográfica */}
+                      <PhotoUploader
+                        userId={currentUser?.uid}
+                        assemblyId={id}
+                        photos={formData.fotos || []}
+                        onPhotosChange={(newPhotos) => setFormData(prev => ({ ...prev, fotos: newPhotos }))}
+                      />
+
+                      {/* Comentarios Generales */}
+                      <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Comentarios Generales
+                        </label>
+                        <textarea
+                          name="comentarios"
+                          value={formData.comentarios || ''}
+                          onChange={handleChange}
+                          rows="3"
+                          placeholder="Observaciones o notas adicionales..."
+                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                        />
                       </div>
 
                       {/* Sección Destructiva */}
@@ -1091,8 +1463,14 @@ const AssemblyDetail = () => {
                         pzDestructivaJig2: 'Piezas Destructiva Jig 2',
                         resultadoDestructivaJig1: 'Resultado Destructiva Jig 1',
                         resultadoDestructivaJig2: 'Resultado Destructiva Jig 2',
-                        comentariosJig1: 'Comentarios Jig 1',
-                        comentariosJig2: 'Comentarios Jig 2'
+                        comentarios: 'Comentarios',
+                        trayectoriaPuntasLimite: 'Trayectoria Puntas al Límite',
+                        trayectoriaPuntasNuevas: 'Trayectoria Puntas Nuevas',
+                        modificacionBloquesJig: 'Modificación Bloques Jig',
+                        juicioPuntosSoldadura: 'Juicio Puntos Soldadura',
+                        condicionSoldadura: 'Condición de Soldadura',
+                        liberacionJig: 'Liberación JIG HVT/LT',
+                        porcentajeObtenido: 'Progreso Validación (%)'
                       };
 
                       return (
@@ -1174,8 +1552,55 @@ const AssemblyDetail = () => {
                             <div className="overflow-x-auto -mx-4 sm:mx-0">
                               <table className="min-w-full">
                                 <tbody className="divide-y divide-gray-100">
-                                  {Object.entries(record.data).map(([key, value]) => {
+                                  {(() => {
+                                    // Orden de campos según el formulario
+                                    const fieldOrder = assembly?.tipo === 'TEACH' 
+                                      ? [
+                                          'trayectoriaPuntasLimite',
+                                          'trayectoriaPuntasNuevas',
+                                          'modificacionBloquesJig',
+                                          'juicioPuntosSoldadura',
+                                          'condicionSoldadura',
+                                          'liberacionJig',
+                                          'porcentajeObtenido',
+                                          'estado',
+                                          'tiempoEstablecidoJig1',
+                                          'tiempoObtenidoJig1',
+                                          'mejoraPorcentajeJig1',
+                                          'tiempoEstablecidoJig2',
+                                          'tiempoObtenidoJig2',
+                                          'mejoraPorcentajeJig2',
+                                          'emisionPuntoCambio',
+                                          'pzDestructivaJig1',
+                                          'resultadoDestructivaJig1',
+                                          'pzDestructivaJig2',
+                                          'resultadoDestructivaJig2',
+                                          'comentarios'
+                                        ]
+                                      : [
+                                          'fechaAjuste',
+                                          'porcentajeObtenido',
+                                          'emisionPuntoCambio',
+                                          'estado',
+                                          'comentarios',
+                                          'linkReporteIR'
+                                        ];
+                                    
+                                    // Ordenar entries según fieldOrder
+                                    const sortedEntries = Object.entries(record.data).sort((a, b) => {
+                                      const indexA = fieldOrder.indexOf(a[0]);
+                                      const indexB = fieldOrder.indexOf(b[0]);
+                                      if (indexA === -1 && indexB === -1) return 0;
+                                      if (indexA === -1) return 1;
+                                      if (indexB === -1) return -1;
+                                      return indexA - indexB;
+                                    });
+                                    
+                                    return sortedEntries.map(([key, value]) => {
                                     if (!value) return null;
+                                    // Excluir campos que son arrays u objetos (como fotos)
+                                    if (Array.isArray(value) || (typeof value === 'object' && value !== null)) return null;
+                                    
                                     
                                     const isEstado = key === 'estado';
                                     const isResultadoDestructiva = key === 'resultadoDestructivaJig1' || key === 'resultadoDestructivaJig2';
@@ -1213,10 +1638,41 @@ const AssemblyDetail = () => {
                                         </td>
                                       </tr>
                                     );
-                                  })}
+                                  });
+                                  })()}
                                 </tbody>
                               </table>
                             </div>
+
+                            {/* Evidencia Fotográfica */}
+                            {record.data.fotos && record.data.fotos.length > 0 && (
+                              <div className="mt-5 pt-4 border-t-2 border-gray-200">
+                                <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2 text-sky-600">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                                  </svg>
+                                  Evidencia Fotográfica ({record.data.fotos.length})
+                                </h5>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                  {record.data.fotos.map((foto, fotoIndex) => (
+                                    <a 
+                                      key={fotoIndex} 
+                                      href={foto.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="block"
+                                    >
+                                      <img 
+                                        src={foto.url} 
+                                        alt={foto.name || `Foto ${fotoIndex + 1}`}
+                                        className="w-full h-auto rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                      />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Comparison with previous record */}
                             {index < history.length - 1 && assembly?.tipo === 'QC' && (

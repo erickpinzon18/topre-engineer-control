@@ -220,7 +220,7 @@ const EngineerDashboard = () => {
                         return (
                           <tr 
                             key={assembly.id}
-                            onClick={() => navigate(`/engineer/assembly/${assembly.id}`)}
+                            onClick={() => navigate(`/engineer/assy/assembly/${assembly.id}`)}
                             className="hover:bg-blue-50 cursor-pointer transition"
                           >
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -244,7 +244,7 @@ const EngineerDashboard = () => {
                                   porcentaje >= (meta * 0.93) ? 'text-blue-600' :
                                   'text-red-600'
                                 }`}>
-                                  {porcentaje}%
+                                  {Math.round(porcentaje)}%
                                 </span>
                                 <div className="w-20 bg-gray-200 rounded-full h-2">
                                   <div 
@@ -300,7 +300,7 @@ const EngineerDashboard = () => {
                     return (
                       <div
                         key={assembly.id}
-                        onClick={() => navigate(`/engineer/assembly/${assembly.id}`)}
+                        onClick={() => navigate(`/engineer/assy/assembly/${assembly.id}`)}
                         className="p-4 hover:bg-blue-50 cursor-pointer transition"
                       >
                         <div className="flex items-start justify-between mb-3">
@@ -335,7 +335,7 @@ const EngineerDashboard = () => {
                               porcentaje >= (meta * 0.93) ? 'text-blue-600' :
                               'text-red-600'
                             }`}>
-                              {porcentaje}%
+                              {Math.round(porcentaje)}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -403,9 +403,9 @@ const EngineerDashboard = () => {
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Máquina</th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Modelo</th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Número</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Jig 1 Mejora</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Jig 2 Mejora</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Test Destructivo</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">% Actual</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Comentarios</th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fechas</th>
                       </tr>
                     </thead>
@@ -413,10 +413,34 @@ const EngineerDashboard = () => {
                       {teachAssemblies.map((assembly) => {
                         const lastRecord = assembly.lastRecord || {};
                         
+                        // Para TEACH: siempre calcular desde campos individuales (más confiable)
+                        const campos = [
+                          { campo: 'trayectoriaPuntasLimite', valorOK: 'OK' },
+                          { campo: 'trayectoriaPuntasNuevas', valorOK: 'OK' },
+                          { campo: 'modificacionBloquesJig', valorOK: 'SI' },
+                          { campo: 'juicioPuntosSoldadura', valorOK: 'OK' },
+                          { campo: 'condicionSoldadura', valorOK: 'OK' },
+                          { campo: 'liberacionJig', valorOK: 'SI' }
+                        ];
+                        
+                        let cumplidos = 0;
+                        campos.forEach(({ campo, valorOK }) => {
+                          if (lastRecord[campo] === valorOK) cumplidos++;
+                        });
+                        
+                        let porcentaje = Math.round((cumplidos / 6) * 100);
+                        let estado = cumplidos >= 5 ? 'OK' : 'Pendiente';
+                        
+                        porcentaje = porcentaje || 0;
+                        estado = estado || 'Pendiente';
+                        
+                        // Para TEACH: comentarios generales
+                        const comentarios = lastRecord.comentarios || '';
+                        
                         return (
                           <tr 
                             key={assembly.id}
-                            onClick={() => navigate(`/engineer/assembly/${assembly.id}`)}
+                            onClick={() => navigate(`/engineer/assy/assembly/${assembly.id}`)}
                             className="hover:bg-green-50 cursor-pointer transition"
                           >
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -434,54 +458,40 @@ const EngineerDashboard = () => {
                               <div className="text-sm text-gray-600 font-mono">#{assembly.numero}</div>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {lastRecord.mejoraPorcentajeJig1 ? (
-                                <span className={`px-3 py-1 inline-flex items-center text-xs font-bold rounded-lg border-2 ${
-                                  parseFloat(lastRecord.mejoraPorcentajeJig1) > 0
-                                    ? 'bg-green-100 text-green-700 border-green-300'
-                                    : 'bg-red-100 text-red-700 border-red-300'
-                                }`}>
-                                  {parseFloat(lastRecord.mejoraPorcentajeJig1) > 0 ? '↑' : '↓'} {lastRecord.mejoraPorcentajeJig1}%
-                                </span>
-                              ) : (
-                                <span className="text-xs text-gray-400">N/A</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {lastRecord.mejoraPorcentajeJig2 ? (
-                                <span className={`px-3 py-1 inline-flex items-center text-xs font-bold rounded-lg border-2 ${
-                                  parseFloat(lastRecord.mejoraPorcentajeJig2) > 0
-                                    ? 'bg-green-100 text-green-700 border-green-300'
-                                    : 'bg-red-100 text-red-700 border-red-300'
-                                }`}>
-                                  {parseFloat(lastRecord.mejoraPorcentajeJig2) > 0 ? '↑' : '↓'} {lastRecord.mejoraPorcentajeJig2}%
-                                </span>
-                              ) : (
-                                <span className="text-xs text-gray-400">N/A</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center space-x-2">
-                                {lastRecord.resultadoDestructivaJig1 && (
-                                  <span className={`px-2 py-1 text-xs font-bold rounded ${
-                                    lastRecord.resultadoDestructivaJig1 === 'OK'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    J1: {lastRecord.resultadoDestructivaJig1}
-                                  </span>
-                                )}
-                                {lastRecord.resultadoDestructivaJig2 && (
-                                  <span className={`px-2 py-1 text-xs font-bold rounded ${
-                                    lastRecord.resultadoDestructivaJig2 === 'OK'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    J2: {lastRecord.resultadoDestructivaJig2}
-                                  </span>
-                                )}
-                                {!lastRecord.resultadoDestructivaJig1 && !lastRecord.resultadoDestructivaJig2 && (
-                                  <span className="text-xs text-gray-400">N/A</span>
-                                )}
+                                <span className={`text-sm font-bold ${
+                                  porcentaje === 100 ? 'text-green-600' :
+                                  porcentaje > 0 ? 'text-orange-600' :
+                                  'text-gray-500'
+                                }`}>
+                                  {Math.round(porcentaje)}%
+                                </span>
+                                <div className="w-20 bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className={`h-2 rounded-full ${
+                                      porcentaje === 100 ? 'bg-green-500' :
+                                      porcentaje > 0 ? 'bg-orange-500' :
+                                      'bg-gray-300'
+                                    }`}
+                                    style={{ width: `${porcentaje}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`px-3 py-1.5 inline-flex text-xs font-bold rounded-full border-2 ${
+                                estado === 'OK' 
+                                  ? 'bg-green-100 text-green-800 border-green-300' 
+                                  : estado === 'NG'
+                                  ? 'bg-red-100 text-red-800 border-red-300'
+                                  : 'bg-gray-100 text-gray-700 border-gray-300'
+                              }`}>
+                                {estado}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 max-w-xs">
+                              <div className="text-xs text-gray-600 truncate" title={comentarios || 'Sin comentarios'}>
+                                {comentarios || 'Sin comentarios'}
                               </div>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -504,17 +514,49 @@ const EngineerDashboard = () => {
                   {teachAssemblies.map((assembly) => {
                     const lastRecord = assembly.lastRecord || {};
                     
+                    // Para TEACH: siempre calcular desde campos individuales (más confiable)
+                    const campos = [
+                      { campo: 'trayectoriaPuntasLimite', valorOK: 'OK' },
+                      { campo: 'trayectoriaPuntasNuevas', valorOK: 'OK' },
+                      { campo: 'modificacionBloquesJig', valorOK: 'SI' },
+                      { campo: 'juicioPuntosSoldadura', valorOK: 'OK' },
+                      { campo: 'condicionSoldadura', valorOK: 'OK' },
+                      { campo: 'liberacionJig', valorOK: 'SI' }
+                    ];
+                    
+                    let cumplidos = 0;
+                    campos.forEach(({ campo, valorOK }) => {
+                      if (lastRecord[campo] === valorOK) cumplidos++;
+                    });
+                    
+                    const porcentaje = Math.round((cumplidos / 6) * 100);
+                    const estado = cumplidos >= 5 ? 'OK' : 'Pendiente';
+                    
+                    // Para TEACH: comentarios generales
+                    const comentarios = lastRecord.comentarios || '';
+                    
                     return (
                       <div
                         key={assembly.id}
-                        onClick={() => navigate(`/engineer/assembly/${assembly.id}`)}
+                        onClick={() => navigate(`/engineer/assy/assembly/${assembly.id}`)}
                         className="p-4 hover:bg-green-50 cursor-pointer transition"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
-                            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-300 inline-block mb-2">
-                              TEACH
-                            </span>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-300">
+                                TEACH
+                              </span>
+                              <span className={`px-2.5 py-1 text-xs font-bold rounded-full border-2 ${
+                                estado === 'OK' 
+                                  ? 'bg-green-100 text-green-800 border-green-300' 
+                                  : estado === 'NG'
+                                  ? 'bg-red-100 text-red-800 border-red-300'
+                                  : 'bg-gray-100 text-gray-700 border-gray-300'
+                              }`}>
+                                {estado}
+                              </span>
+                            </div>
                             <h3 className="text-base font-bold text-gray-900">{assembly.maquina} / {assembly.modelo}</h3>
                             <p className="text-sm text-gray-600 mt-0.5">#{assembly.numero}</p>
                           </div>
@@ -524,63 +566,33 @@ const EngineerDashboard = () => {
                         </div>
 
                         <div className="space-y-2 mb-3">
-                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                            <span className="text-xs text-gray-600 font-medium">Jig 1 Mejora</span>
-                            {lastRecord.mejoraPorcentajeJig1 ? (
-                              <span className={`px-2.5 py-1 text-xs font-bold rounded-lg border-2 ${
-                                parseFloat(lastRecord.mejoraPorcentajeJig1) > 0
-                                  ? 'bg-green-100 text-green-700 border-green-300'
-                                  : 'bg-red-100 text-red-700 border-red-300'
-                              }`}>
-                                {parseFloat(lastRecord.mejoraPorcentajeJig1) > 0 ? '↑' : '↓'} {lastRecord.mejoraPorcentajeJig1}%
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">N/A</span>
-                            )}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600 font-medium">Progreso Validación</span>
+                            <span className={`text-sm font-bold ${
+                              porcentaje === 100 ? 'text-green-600' :
+                              porcentaje > 0 ? 'text-orange-600' :
+                              'text-gray-500'
+                            }`}>
+                              {Math.round(porcentaje)}%
+                            </span>
                           </div>
-
-                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                            <span className="text-xs text-gray-600 font-medium">Jig 2 Mejora</span>
-                            {lastRecord.mejoraPorcentajeJig2 ? (
-                              <span className={`px-2.5 py-1 text-xs font-bold rounded-lg border-2 ${
-                                parseFloat(lastRecord.mejoraPorcentajeJig2) > 0
-                                  ? 'bg-green-100 text-green-700 border-green-300'
-                                  : 'bg-red-100 text-red-700 border-red-300'
-                              }`}>
-                                {parseFloat(lastRecord.mejoraPorcentajeJig2) > 0 ? '↑' : '↓'} {lastRecord.mejoraPorcentajeJig2}%
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">N/A</span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                            <span className="text-xs text-gray-600 font-medium">Test Destructivo</span>
-                            <div className="flex gap-1">
-                              {lastRecord.resultadoDestructivaJig1 && (
-                                <span className={`px-2 py-0.5 text-xs font-bold rounded ${
-                                  lastRecord.resultadoDestructivaJig1 === 'OK'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  J1: {lastRecord.resultadoDestructivaJig1}
-                                </span>
-                              )}
-                              {lastRecord.resultadoDestructivaJig2 && (
-                                <span className={`px-2 py-0.5 text-xs font-bold rounded ${
-                                  lastRecord.resultadoDestructivaJig2 === 'OK'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  J2: {lastRecord.resultadoDestructivaJig2}
-                                </span>
-                              )}
-                              {!lastRecord.resultadoDestructivaJig1 && !lastRecord.resultadoDestructivaJig2 && (
-                                <span className="text-xs text-gray-400">N/A</span>
-                              )}
-                            </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full ${
+                                porcentaje === 100 ? 'bg-green-500' : 
+                                porcentaje > 0 ? 'bg-orange-500' : 
+                                'bg-gray-300'
+                              }`}
+                              style={{ width: `${porcentaje}%` }}
+                            ></div>
                           </div>
                         </div>
+
+                        {comentarios && (
+                          <div className="mb-3 p-2 bg-gray-50 rounded">
+                            <p className="text-xs text-gray-600">{comentarios}</p>
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
                           <div>

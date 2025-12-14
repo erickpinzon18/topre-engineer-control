@@ -18,19 +18,35 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log('🔐 Iniciando login...');
       const result = await login(email, password);
+      
+      console.log('📦 Resultado del login:', result);
+      console.log('👤 Profile:', result.profile);
+      console.log('🏷️ Type:', result.profile?.type);
+      console.log('📍 Section:', result.profile?.section);
       
       if (result.success) {
         // Redirigir según el tipo de usuario
-        if (result.userProfile?.type === 'admin') {
+        if (result.profile?.type === 'admin') {
+          console.log('➡️ Redirigiendo a /admin');
           navigate('/admin');
+        } else if (result.profile?.type === 'ing') {
+          // Redirigir a la sección correspondiente del ingeniero
+          const section = result.profile?.section || 'assy';
+          console.log(`➡️ Redirigiendo a /engineer/${section}`);
+          navigate(`/engineer/${section}`);
         } else {
-          navigate('/engineer');
+          // Fallback para tipos de usuario desconocidos
+          console.log('⚠️ Tipo de usuario desconocido, redirigiendo a /login');
+          navigate('/login');
         }
       } else {
+        console.log('❌ Login fallido:', result.error);
         setError(result.error || 'Error al iniciar sesión');
       }
     } catch (err) {
+      console.error('🔥 Error en login:', err);
       setError('Error al conectar con el servidor');
     } finally {
       setIsLoading(false);

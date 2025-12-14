@@ -88,7 +88,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     isAdmin: userProfile?.type === 'admin',
-    isEngineer: userProfile?.type === 'ing'
+    isEngineer: userProfile?.type === 'ing',
+    userSection: userProfile?.section // 'assy', 'press', 'hot-press'
   };
 
   return (

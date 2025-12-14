@@ -5,6 +5,8 @@ import EngineerDashboard from './pages/EngineerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AssemblyDetail from './pages/AssemblyDetail';
 import AssemblyView from './pages/AssemblyView';
+import PressDashboard from './pages/PressDashboard';
+import HotPressDashboard from './pages/HotPressDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -14,25 +16,52 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           
-          {/* Rutas de Ingeniero */}
+          {/* ========== RUTAS DE INGENIEROS POR SECCIÓN ========== */}
+          
+          {/* --- Sección ASSY (Assembly) --- */}
           <Route 
-            path="/engineer" 
+            path="/engineer/assy" 
             element={
-              <ProtectedRoute requireEngineer={true}>
+              <ProtectedRoute requireEngineer={true} allowedSections={['assy']}>
                 <EngineerDashboard />
               </ProtectedRoute>
             } 
           />
           <Route 
-            path="/engineer/assembly/:id" 
+            path="/engineer/assy/assembly/:id" 
             element={
-              <ProtectedRoute requireEngineer={true}>
+              <ProtectedRoute requireEngineer={true} allowedSections={['assy']}>
                 <AssemblyDetail />
               </ProtectedRoute>
             } 
           />
 
-          {/* Rutas de Administrador */}
+          {/* --- Sección PRESS --- */}
+          <Route 
+            path="/engineer/press" 
+            element={
+              <ProtectedRoute requireEngineer={true} allowedSections={['press']}>
+                <PressDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Aquí irán las rutas de detalle de Press cuando se desarrollen */}
+
+          {/* --- Sección HOT-PRESS --- */}
+          <Route 
+            path="/engineer/hot-press" 
+            element={
+              <ProtectedRoute requireEngineer={true} allowedSections={['hot-press']}>
+                <HotPressDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Aquí irán las rutas de detalle de Hot-Press cuando se desarrollen */}
+
+          {/* Ruta legacy /engineer redirige según sección (se maneja en Login) */}
+          <Route path="/engineer" element={<Navigate to="/login" replace />} />
+
+          {/* ========== RUTAS DE ADMINISTRADOR ========== */}
           <Route 
             path="/admin" 
             element={

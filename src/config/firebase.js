@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Configuración de Firebase desde variables de entorno
 // Copia .env.example como .env y completa con tus credenciales
@@ -19,5 +20,6 @@ const app = initializeApp(firebaseConfig);
 // Inicializar servicios
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 export default app;
