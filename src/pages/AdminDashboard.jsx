@@ -218,9 +218,23 @@ const AdminDashboard = () => {
           return days < 0;
         }).length;
 
-        // Tasa de completitud
+        // Función para determinar si un ensamble tiene calidad OK
+        const isAssemblyOK = (assembly) => {
+          if (assembly.tipo === 'QC') {
+            const meta = assembly.meta || 97;
+            return (assembly.progress || 0) >= meta;
+          } else if (assembly.tipo === 'TEACH') {
+            // Calcular desde campos de validación (simplificado: usamos progress >= 83 que es 5/6)
+            return (assembly.progress || 0) >= 83;
+          }
+          return false;
+        };
+
+        // Tasa de completitud (basada en calidad OK, no en progress=100%)
+        const allAssembliesForEngineer = [...engineer.activeAssemblies, ...engineer.completedAssemblies];
+        const okCount = allAssembliesForEngineer.filter(a => isAssemblyOK(a)).length;
         const completionRate = totalAssemblies > 0
-          ? Math.round((completedCount / totalAssemblies) * 100)
+          ? Math.round((okCount / totalAssemblies) * 100)
           : 0;
 
         // Promedio de días hasta deadline (solo activos)
@@ -378,7 +392,7 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Panel de Estadísticas Detalladas */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-4 sm:p-5 bg-gray-50 border-b border-gray-200">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 p-4 sm:p-5 bg-gray-50 border-b border-gray-200">
                   {/* Stat 1: Activos */}
                   <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200">
                     <div className="flex items-center space-x-2 mb-2">
@@ -402,7 +416,7 @@ const AdminDashboard = () => {
                     <p className="text-xs text-gray-500 mt-1">{engineer.stats.completedThisWeek} esta semana</p>
                   </div>
 
-                  {/* Stat 3: En Riesgo */}
+                  {/* Stat 3: En Riesgo - Comentado
                   <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200">
                     <div className="flex items-center space-x-2 mb-2">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600">
@@ -413,8 +427,9 @@ const AdminDashboard = () => {
                     <p className="text-xl sm:text-2xl font-bold text-yellow-600">{engineer.stats.atRiskCount}</p>
                     <p className="text-xs text-gray-500 mt-1">≤7 días restantes</p>
                   </div>
+                  */}
 
-                  {/* Stat 4: Retrasados */}
+                  {/* Stat 4: Retrasados - Comentado
                   <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200">
                     <div className="flex items-center space-x-2 mb-2">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-red-600">
@@ -425,6 +440,7 @@ const AdminDashboard = () => {
                     <p className="text-xl sm:text-2xl font-bold text-red-600">{engineer.stats.overdueCount}</p>
                     <p className="text-xs text-gray-500 mt-1">Deadline pasado</p>
                   </div>
+                  */}
                 </div>
 
                 {/* Estadísticas Secundarias */}
