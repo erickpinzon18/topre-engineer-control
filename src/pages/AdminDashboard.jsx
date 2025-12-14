@@ -428,9 +428,9 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Estadísticas Secundarias */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 p-4 sm:p-5 bg-white border-b border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 sm:gap-4 p-4 sm:p-5 bg-white border-b border-gray-200">
                   {/* Tipo QC */}
-                  <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="bg-blue-600 p-2 rounded-lg">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-white">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
@@ -443,7 +443,7 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Tipo TEACH */}
-                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg border border-green-200">
                     <div className="bg-green-600 p-2 rounded-lg">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-white">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
@@ -456,7 +456,7 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Promedio días a deadline */}
-                  <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  {/* <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
                     <div className="bg-purple-600 p-2 rounded-lg">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-white">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
@@ -466,7 +466,7 @@ const AdminDashboard = () => {
                       <p className="text-xs font-medium text-purple-700 uppercase">Promedio Días</p>
                       <p className="text-lg sm:text-xl font-bold text-purple-900">{engineer.stats.avgDaysToDeadline}</p>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Tabla de ensambles del trabajador */}
@@ -482,7 +482,8 @@ const AdminDashboard = () => {
                         <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Ensamble</th>
                         <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Tipo</th>
                         <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Progreso</th>
-                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th>
+                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Calidad</th>
+                        {/* <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th> */}
                         <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fechas</th>
                         <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estadísticas</th>
                       </tr>
@@ -530,6 +531,44 @@ const AdminDashboard = () => {
                               </div>
                             </td>
                             <td className="px-3 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
+                              {(() => {
+                                // Para QC: OK si >= meta (97%)
+                                // Para TEACH: OK si 5+ de 6 campos están OK/SI
+                                let isOK = false;
+                                
+                                if (assembly.tipo === 'QC') {
+                                  const meta = assembly.meta || 97;
+                                  isOK = (assembly.progress || 0) >= meta;
+                                } else if (assembly.tipo === 'TEACH') {
+                                  // Buscar el último historial para calcular
+                                  const lastRecord = assembly.stats?.lastRecord || {};
+                                  const campos = [
+                                    { campo: 'trayectoriaPuntasLimite', valorOK: 'OK' },
+                                    { campo: 'trayectoriaPuntasNuevas', valorOK: 'OK' },
+                                    { campo: 'modificacionBloquesJig', valorOK: 'SI' },
+                                    { campo: 'juicioPuntosSoldadura', valorOK: 'OK' },
+                                    { campo: 'condicionSoldadura', valorOK: 'OK' },
+                                    { campo: 'liberacionJig', valorOK: 'SI' }
+                                  ];
+                                  let cumplidos = 0;
+                                  campos.forEach(({ campo, valorOK }) => {
+                                    if (lastRecord[campo] === valorOK) cumplidos++;
+                                  });
+                                  isOK = cumplidos >= 5;
+                                }
+                                
+                                return (
+                                  <span className={`px-2 sm:px-3 py-1 inline-flex text-xs font-bold rounded-full border-2 ${
+                                    isOK 
+                                      ? 'bg-green-100 text-green-800 border-green-300' 
+                                      : 'bg-red-100 text-red-800 border-red-300'
+                                  }`}>
+                                    {isOK ? 'OK' : 'NG'}
+                                  </span>
+                                );
+                              })()}
+                            </td>
+                            {/* <td className="px-3 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
                               {isOverdue ? (
                                 <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border-2 border-red-300">
                                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 mr-1">
@@ -552,20 +591,12 @@ const AdminDashboard = () => {
                                   Activo
                                 </span>
                               )}
-                            </td>
+                            </td> */}
                             <td className="px-3 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
-                              <div className={`text-xs sm:text-sm font-semibold ${
-                                isOverdue ? 'text-red-700' : 
-                                isAtRisk ? 'text-yellow-700' : 
-                                'text-gray-700'
-                              }`}>
+                              <div className={`text-xs sm:text-sm font-semibold text-gray-700`}>
                                 {assembly.fechaDeadline}
                               </div>
-                              <div className={`text-xs font-medium mt-1 ${
-                                isOverdue ? 'text-red-600' : 
-                                isAtRisk ? 'text-yellow-600' : 
-                                'text-gray-500'
-                              }`}>
+                              <div className={`text-xs font-medium mt-1 text-gray-500`}>
                                 {isOverdue ? `${Math.abs(daysRemaining)} días de retraso` : `${daysRemaining} días restantes`}
                               </div>
                             </td>
@@ -603,7 +634,7 @@ const AdminDashboard = () => {
                           {/* Fila expandible con estadísticas */}
                           {isExpanded && hasStats && (
                             <tr className="bg-linear-to-r from-sky-50 to-blue-50">
-                              <td colSpan="6" className="px-3 sm:px-5 py-4 sm:py-6">
+                              <td colSpan="7" className="px-3 sm:px-5 py-4 sm:py-6">
                                 {assembly.tipo === 'QC' && assembly.stats.firstPercent && (
                                   <div className="space-y-4">
                                     <h5 className="text-sm font-bold text-gray-900 mb-4 flex items-center">
@@ -808,6 +839,11 @@ const AdminDashboard = () => {
                               </div>
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap">
+                              <span className="px-3 py-1 inline-flex text-xs font-bold rounded-full border-2 bg-green-100 text-green-800 border-green-300">
+                                OK
+                              </span>
+                            </td>
+                            <td className="px-5 py-4 whitespace-nowrap">
                               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border-2 border-green-300">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
@@ -855,7 +891,7 @@ const AdminDashboard = () => {
                           {/* Fila expandible con estadísticas para completados */}
                           {isExpanded && hasStats && (
                             <tr className="bg-linear-to-r from-green-50 to-emerald-50">
-                              <td colSpan="6" className="px-5 py-6">
+                              <td colSpan="7" className="px-5 py-6">
                                 {assembly.tipo === 'QC' && assembly.stats.firstPercent && (
                                   <div className="space-y-4">
                                     <h5 className="text-sm font-bold text-gray-900 mb-4 flex items-center">
