@@ -6,6 +6,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import AssemblyDetail from './pages/AssemblyDetail';
 import AssemblyView from './pages/AssemblyView';
 import PressDashboard from './pages/PressDashboard';
+import PressDetail from './pages/PressDetail';
+import PressView from './pages/PressView';
 import HotPressDashboard from './pages/HotPressDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -45,7 +47,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          {/* Aquí irán las rutas de detalle de Press cuando se desarrollen */}
+          <Route 
+            path="/engineer/press/:id" 
+            element={
+              <ProtectedRoute requireEngineer={true} allowedSections={['press']}>
+                <PressDetail />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* --- Sección HOT-PRESS --- */}
           <Route 
@@ -75,6 +84,14 @@ function App() {
             element={
               <ProtectedRoute requireAdmin={true}>
                 <AssemblyView />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/press/:id" 
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <PressView />
               </ProtectedRoute>
             } 
           />

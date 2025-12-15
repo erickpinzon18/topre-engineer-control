@@ -76,7 +76,7 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
                   {/* Modal Header */}
                   <div className="flex justify-between items-center p-5 border-b border-gray-200">
                     <Dialog.Title className="text-xl font-semibold text-gray-900">
-                      Registrar Nuevo Ensamble
+                      REGISTRAR AJUSTE EN TROQUEL
                     </Dialog.Title>
                     <button
                       type="button"
@@ -128,7 +128,7 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
                     {/* Row 2: Numero */}
                     <div>
                       <label htmlFor="numero" className="block text-sm font-medium text-gray-700 mb-1">
-                        Número
+                        Número de Parte
                       </label>
                       <input
                         type="text"
@@ -142,37 +142,19 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
                       />
                     </div>
 
-                    {/* Row 3: Responsabilidad y Tipo */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="responsabilidad" className="block text-sm font-medium text-gray-700 mb-1">
-                          Responsabilidad
-                        </label>
-                        <input
-                          type="text"
-                          name="responsabilidad"
-                          id="responsabilidad"
-                          value={userName}
-                          disabled
-                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
-                          Tipo
-                        </label>
-                        <select
-                          name="tipo"
-                          id="tipo"
-                          required
-                          value={formData.tipo}
-                          onChange={handleChange}
-                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                        >
-                          <option value="QC">QC - Level Up</option>
-                          <option value="TEACH">TEACH</option>
-                        </select>
-                      </div>
+                    {/* Row 3: Tipo */}
+                    <div>
+                      <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
+                        Tipo
+                      </label>
+                      <input
+                        type="text"
+                        name="tipo"
+                        id="tipo"
+                        value="QC"
+                        disabled
+                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500"
+                      />
                     </div>
 
                     {/* Row 4: Fechas */}
@@ -192,58 +174,41 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="fechaDeadline" className="block text-sm font-medium text-gray-700 mb-1">
-                          Fecha Deadline
+                        <label htmlFor="fechaPrestamo" className="block text-sm font-medium text-gray-700 mb-1">
+                          Fecha de Préstamo
                         </label>
                         <input
                           type="date"
-                          name="fechaDeadline"
-                          id="fechaDeadline"
+                          name="fechaPrestamo"
+                          id="fechaPrestamo"
                           required
-                          value={formData.fechaDeadline}
+                          value={formData.fechaPrestamo}
                           onChange={handleChange}
                           className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
                         />
                       </div>
                     </div>
 
-                    {/* Row 5: Fecha de Préstamo */}
+                    {/* Row 5: Porcentaje Meta */}
                     <div>
-                      <label htmlFor="fechaPrestamo" className="block text-sm font-medium text-gray-700 mb-1">
-                        Fecha de Préstamo de Máquina
+                      <label htmlFor="porcentajeMeta" className="block text-sm font-medium text-gray-700 mb-1">
+                        Porcentaje Meta
                       </label>
                       <input
-                        type="date"
-                        name="fechaPrestamo"
-                        id="fechaPrestamo"
-                        value={formData.fechaPrestamo}
+                        type="number"
+                        name="porcentajeMeta"
+                        id="porcentajeMeta"
+                        required
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={formData.porcentajeMeta}
                         onChange={handleChange}
+                        placeholder="97"
                         className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
                       />
-                      <p className="mt-1 text-xs text-gray-500">Fecha en que producción para la máquina para revisión</p>
+                      <p className="mt-1 text-xs text-gray-500">Porcentaje objetivo a alcanzar</p>
                     </div>
-
-                    {/* Row 6: Porcentaje Meta (solo para QC) */}
-                    {formData.tipo === 'QC' && (
-                      <div>
-                        <label htmlFor="porcentajeMeta" className="block text-sm font-medium text-gray-700 mb-1">
-                          Porcentaje Meta
-                        </label>
-                        <input
-                          type="number"
-                          name="porcentajeMeta"
-                          id="porcentajeMeta"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={formData.porcentajeMeta}
-                          onChange={handleChange}
-                          placeholder="97"
-                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">Por defecto es 97% si se deja vacío</p>
-                      </div>
-                    )}
                   </div>
 
                   {/* Modal Footer */}
@@ -259,7 +224,7 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
                       type="submit"
                       className="bg-sky-700 hover:bg-sky-800 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition"
                     >
-                      Registrar Ensamble
+                      Registrar Ajuste
                     </button>
                   </div>
                 </form>

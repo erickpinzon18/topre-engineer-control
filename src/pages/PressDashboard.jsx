@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import AssemblyModal from '../components/AssemblyModal';
@@ -42,14 +42,16 @@ const PressDashboard = () => {
           try {
             const historyQuery = query(
               collection(db, 'assemblies', doc.id, 'history'),
-              orderBy('createdAt', 'desc')
+              orderBy('createdAt', 'desc'),
+              limit(1)
             );
             
             const historySnapshot = await getDocs(historyQuery);
             
             if (!historySnapshot.empty) {
               const lastRecordDoc = historySnapshot.docs[0];
-              assemblyData.lastRecord = lastRecordDoc.data().data || {};
+              // Acceder directamente a los campos del registro
+              assemblyData.lastRecord = lastRecordDoc.data();
             }
           } catch (historyError) {
             console.error('Error cargando historial:', historyError);
@@ -158,8 +160,8 @@ const PressDashboard = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
-                  <span className="hidden sm:inline">Registrar Nuevo Ensamble</span>
-                  <span className="sm:hidden">Nuevo Ensamble</span>
+                  <span className="hidden sm:inline">Registrar Ajuste en Troquel</span>
+                  <span className="sm:hidden">Registrar Ajuste</span>
                 </button>
               </div>
             </div>
@@ -170,8 +172,8 @@ const PressDashboard = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                   </svg>
-                  <p className="text-gray-500 text-base sm:text-lg">No tienes ensambles registrados</p>
-                  <p className="text-gray-400 text-sm mt-2">Haz clic en "Registrar Nuevo Ensamble" para comenzar</p>
+                  <p className="text-gray-500 text-base sm:text-lg">No tienes ajustes registrados</p>
+                  <p className="text-gray-400 text-sm mt-2">Haz clic en "Registrar Ajuste en Troquel" para comenzar</p>
                 </div>
               </div>
             ) : (
@@ -213,14 +215,26 @@ const PressDashboard = () => {
                       {qcAssemblies.map((assembly) => {
                         const progress = calculateProgress(assembly);
                         const lastRecord = assembly.lastRecord || {};
-                        const estado = lastRecord.estado || 'Pendiente';
+                        // Los datos del historial están anidados bajo .data
+                        const recordData = lastRecord.data || lastRecord;
+                        
+                        // Calcular porcentaje desde campos individuales si no hay porcentajeObtenido
+                        let porcentaje = recordData.porcentajeObtenido || 0;
+                        if (porcentaje === 0 && (recordData.mikomi || recordData.atari || recordData.ajustesExtras)) {
+                          let cumplidos = 0;
+                          if (recordData.mikomi === 'OK') cumplidos++;
+                          if (recordData.atari === 'OK') cumplidos++;
+                          if (recordData.ajustesExtras === 'OK') cumplidos++;
+                          porcentaje = Math.round((cumplidos / 3) * 100);
+                        }
+                        
+                        const estado = porcentaje === 100 ? 'OK' : (recordData.estado || 'Pendiente');
                         const meta = parseFloat(assembly.porcentajeMeta || '97');
-                        const porcentaje = lastRecord.porcentajeObtenido || 0;
                         
                         return (
                           <tr 
                             key={assembly.id}
-                            onClick={() => navigate(`/engineer/press/assembly/${assembly.id}`)}
+                            onClick={() => navigate(`/engineer/press/${assembly.id}`)}
                             className="hover:bg-blue-50 cursor-pointer transition"
                           >
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -270,8 +284,8 @@ const PressDashboard = () => {
                               </span>
                             </td>
                             <td className="px-4 py-3 max-w-xs">
-                              <div className="text-xs text-gray-600 truncate" title={lastRecord.comentarios || 'Sin comentarios'}>
-                                {lastRecord.comentarios || 'Sin comentarios'}
+                              <div className="text-xs text-gray-600 truncate" title={recordData.comentarios || 'Sin comentarios'}>
+                                {recordData.comentarios || 'Sin comentarios'}
                               </div>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -293,14 +307,26 @@ const PressDashboard = () => {
                 <div className="lg:hidden divide-y divide-gray-200">
                   {qcAssemblies.map((assembly) => {
                     const lastRecord = assembly.lastRecord || {};
-                    const estado = lastRecord.estado || 'Pendiente';
+                    // Los datos del historial están anidados bajo .data
+                    const recordData = lastRecord.data || lastRecord;
+                    
+                    // Calcular porcentaje desde campos individuales si no hay porcentajeObtenido
+                    let porcentaje = recordData.porcentajeObtenido || 0;
+                    if (porcentaje === 0 && (recordData.mikomi || recordData.atari || recordData.ajustesExtras)) {
+                      let cumplidos = 0;
+                      if (recordData.mikomi === 'OK') cumplidos++;
+                      if (recordData.atari === 'OK') cumplidos++;
+                      if (recordData.ajustesExtras === 'OK') cumplidos++;
+                      porcentaje = Math.round((cumplidos / 3) * 100);
+                    }
+                    
+                    const estado = porcentaje === 100 ? 'OK' : (recordData.estado || 'Pendiente');
                     const meta = parseFloat(assembly.porcentajeMeta || '97');
-                    const porcentaje = lastRecord.porcentajeObtenido || 0;
                     
                     return (
                       <div
                         key={assembly.id}
-                        onClick={() => navigate(`/engineer/press/assembly/${assembly.id}`)}
+                        onClick={() => navigate(`/engineer/press/${assembly.id}`)}
                         className="p-4 hover:bg-blue-50 cursor-pointer transition"
                       >
                         <div className="flex items-start justify-between mb-3">
@@ -350,9 +376,9 @@ const PressDashboard = () => {
                           </div>
                         </div>
 
-                        {lastRecord.comentarios && (
+                        {recordData.comentarios && (
                           <div className="mb-3 p-2 bg-gray-50 rounded">
-                            <p className="text-xs text-gray-600">{lastRecord.comentarios}</p>
+                            <p className="text-xs text-gray-600">{recordData.comentarios}</p>
                           </div>
                         )}
 
@@ -440,7 +466,7 @@ const PressDashboard = () => {
                         return (
                           <tr 
                             key={assembly.id}
-                            onClick={() => navigate(`/engineer/press/assembly/${assembly.id}`)}
+                            onClick={() => navigate(`/engineer/press/${assembly.id}`)}
                             className="hover:bg-green-50 cursor-pointer transition"
                           >
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -538,7 +564,7 @@ const PressDashboard = () => {
                     return (
                       <div
                         key={assembly.id}
-                        onClick={() => navigate(`/engineer/press/assembly/${assembly.id}`)}
+                        onClick={() => navigate(`/engineer/press/${assembly.id}`)}
                         className="p-4 hover:bg-green-50 cursor-pointer transition"
                       >
                         <div className="flex items-start justify-between mb-3">

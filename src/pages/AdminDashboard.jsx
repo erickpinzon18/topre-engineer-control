@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [engineers, setEngineers] = useState([]);
   const [expandedAssemblies, setExpandedAssemblies] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({
     activeAssemblies: 0,
     completedLast7Days: 0,
@@ -32,25 +33,56 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
+      // Primero cargar información de usuarios para obtener sus secciones
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      const usersMap = {};
+      usersSnapshot.docs.forEach(userDoc => {
+        usersMap[userDoc.id] = userDoc.data();
+      });
+
       // Obtener todos los ensambles
       const assembliesRef = collection(db, 'assemblies');
       const assembliesSnapshot = await getDocs(assembliesRef);
       
       const allAssemblies = await Promise.all(
-        assembliesSnapshot.docs.map(async (doc) => {
+        assembliesSnapshot.docs.map(async (docSnapshot) => {
           const assemblyData = {
-            id: doc.id,
-            ...doc.data()
+            id: docSnapshot.id,
+            ...docSnapshot.data()
           };
 
+          // Obtener la sección del usuario que creó el ensamble
+          const userSection = usersMap[assemblyData.userId]?.section || null;
+          
           // Cargar historial para calcular estadísticas
-          const historyRef = collection(db, 'assemblies', doc.id, 'history');
+          const historyRef = collection(db, 'assemblies', docSnapshot.id, 'history');
           const historySnapshot = await getDocs(query(historyRef, orderBy('createdAt', 'desc')));
           
           const history = historySnapshot.docs.map(historyDoc => ({
             id: historyDoc.id,
             ...historyDoc.data()
           }));
+
+          // Detectar el área del ensamble basándose en campos del historial o sección del usuario
+          let detectedArea = userSection; // Por defecto usar sección del usuario
+          
+          if (!detectedArea && history.length > 0) {
+            const lastData = history[0]?.data || {};
+            // Si tiene campos de Press (mikomi, atari, ajustesExtras)
+            if (lastData.mikomi !== undefined || lastData.atari !== undefined || lastData.ajustesExtras !== undefined) {
+              detectedArea = 'press';
+            }
+            // Si tiene campos de Assy (tiempoEstablecidoJig1, mejoraPorcentajeJig1, etc.)
+            else if (lastData.tiempoEstablecidoJig1 !== undefined || lastData.mejoraPorcentajeJig1 !== undefined) {
+              detectedArea = 'assy';
+            }
+          }
+          
+          // Si todavía no se puede determinar, asumir assy por defecto
+          if (!detectedArea) {
+            detectedArea = 'assy';
+          }
 
           // Calcular estadísticas según el tipo
           let assemblyStats = {};
@@ -136,6 +168,7 @@ const AdminDashboard = () => {
 
           return {
             ...assemblyData,
+            area: detectedArea,
             stats: assemblyStats
           };
         })
@@ -177,6 +210,7 @@ const AdminDashboard = () => {
           engineersMap[userId] = {
             id: userId,
             name: userName,
+            section: usersMap[userId]?.section || assembly.area || 'assy',
             activeAssemblies: [],
             completedAssemblies: []
           };
@@ -337,39 +371,102 @@ const AdminDashboard = () => {
         </div>
 
         {/* Título de la sección de trabajadores */}
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-5 mt-8 sm:mt-10">
-          Actividad por Ingeniero
-        </h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-8 sm:mt-10 mb-4 sm:mb-5">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
+            Actividad por Ingeniero
+          </h2>
+          
+          {/* Buscador de ingenieros */}
+          <div className="relative w-full sm:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar ingeniero..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400 hover:text-gray-600">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Contenedor de Tarjetas de Trabajador */}
         <div className="space-y-4 sm:space-y-6">
-          {engineers.length === 0 ? (
+          {engineers.filter(eng => eng.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
             <div className="bg-white shadow-lg rounded-lg p-8 text-center">
-              <p className="text-gray-500">No hay ingenieros con ensambles asignados</p>
+              <p className="text-gray-500">{searchQuery ? `No se encontró ningún ingeniero con "${searchQuery}"` : 'No hay ingenieros con ensambles asignados'}</p>
             </div>
           ) : (
-            engineers.map((engineer) => (
+            engineers.filter(eng => eng.name.toLowerCase().includes(searchQuery.toLowerCase())).map((engineer) => (
               <div key={engineer.id} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-                {/* Encabezado de la Tarjeta */}
-                <div className="p-4 sm:p-6 bg-linear-to-r from-sky-50 to-blue-50 border-b-2 border-sky-200">
+                {/* Encabezado de la Tarjeta - Coloreado según sección */}
+                <div className={`p-4 sm:p-6 border-b-2 ${
+                  engineer.section === 'press' 
+                    ? 'bg-linear-to-r from-orange-50 to-amber-50 border-orange-200' 
+                    : engineer.section === 'hot-press'
+                    ? 'bg-linear-to-r from-red-50 to-rose-50 border-red-200'
+                    : 'bg-linear-to-r from-sky-50 to-blue-50 border-sky-200'
+                }`}>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
                     <div className="flex items-center space-x-3">
-                      <div className="bg-sky-600 p-2 sm:p-3 rounded-full">
+                      <div className={`p-2 sm:p-3 rounded-full ${
+                        engineer.section === 'press' 
+                          ? 'bg-orange-600' 
+                          : engineer.section === 'hot-press'
+                          ? 'bg-red-600'
+                          : 'bg-sky-600'
+                      }`}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-white">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-900">{engineer.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg sm:text-xl font-bold text-gray-900">{engineer.name}</h3>
+                          <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                            engineer.section === 'press' 
+                              ? 'bg-orange-100 text-orange-800 border border-orange-300' 
+                              : engineer.section === 'hot-press'
+                              ? 'bg-red-100 text-red-800 border border-red-300'
+                              : 'bg-blue-100 text-blue-800 border border-blue-300'
+                          }`}>
+                            {engineer.section === 'press' ? 'PRESS' : engineer.section === 'hot-press' ? 'HOT-PRESS' : 'ASSY'}
+                          </span>
+                        </div>
                         <p className="text-xs sm:text-sm text-gray-600 font-medium">
                           {engineer.stats.totalAssemblies} Ensamble{engineer.stats.totalAssemblies !== 1 ? 's' : ''} Total{engineer.stats.totalAssemblies !== 1 ? 'es' : ''}
                         </p>
                       </div>
                     </div>
                     <div className="text-right w-full sm:w-auto">
-                      <div className="bg-white px-3 sm:px-4 py-2 rounded-lg shadow-sm border border-sky-200">
+                      <div className={`bg-white px-3 sm:px-4 py-2 rounded-lg shadow-sm border ${
+                        engineer.section === 'press' 
+                          ? 'border-orange-200' 
+                          : engineer.section === 'hot-press'
+                          ? 'border-red-200'
+                          : 'border-sky-200'
+                      }`}>
                         <p className="text-xs text-gray-500 font-medium">Tasa de Completitud</p>
-                        <p className="text-xl sm:text-2xl font-bold text-sky-600">{engineer.stats.completionRate}%</p>
+                        <p className={`text-xl sm:text-2xl font-bold ${
+                          engineer.section === 'press' 
+                            ? 'text-orange-600' 
+                            : engineer.section === 'hot-press'
+                            ? 'text-red-600'
+                            : 'text-sky-600'
+                        }`}>{engineer.stats.completionRate}%</p>
                       </div>
                     </div>
                   </div>
@@ -379,11 +476,23 @@ const AdminDashboard = () => {
                     <div className="mt-4 bg-white rounded-lg p-3 sm:p-4 shadow-sm">
                       <div className="flex justify-between mb-2">
                         <span className="text-xs sm:text-sm font-semibold text-gray-700">Porcentaje de Calidad Promedio (Activos)</span>
-                        <span className="text-xs sm:text-sm font-bold text-sky-700">{engineer.stats.averageProgress}%</span>
+                        <span className={`text-xs sm:text-sm font-bold ${
+                          engineer.section === 'press' 
+                            ? 'text-orange-700' 
+                            : engineer.section === 'hot-press'
+                            ? 'text-red-700'
+                            : 'text-sky-700'
+                        }`}>{engineer.stats.averageProgress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 shadow-inner">
                         <div 
-                          className="bg-linear-to-r from-sky-500 to-blue-600 h-2.5 sm:h-3 rounded-full transition-all duration-500 shadow-sm" 
+                          className={`h-2.5 sm:h-3 rounded-full transition-all duration-500 shadow-sm ${
+                            engineer.section === 'press' 
+                              ? 'bg-linear-to-r from-orange-500 to-amber-600' 
+                              : engineer.section === 'hot-press'
+                              ? 'bg-linear-to-r from-red-500 to-rose-600'
+                              : 'bg-linear-to-r from-sky-500 to-blue-600'
+                          }`}
                           style={{ width: `${engineer.stats.averageProgress}%` }}
                         ></div>
                       </div>
@@ -633,7 +742,7 @@ const AdminDashboard = () => {
                                   <span className="text-xs text-gray-400 italic">Sin datos</span>
                                 )}
                                 <button
-                                  onClick={() => navigate(`/admin/assembly/${assembly.id}`)}
+                                  onClick={() => navigate(assembly.area === 'press' ? `/admin/press/${assembly.id}` : `/admin/assembly/${assembly.id}`)}
                                   className="inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs transition-all shadow-md"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1">
@@ -891,7 +1000,7 @@ const AdminDashboard = () => {
                                   <span className="text-xs text-gray-400 italic">Sin datos</span>
                                 )}
                                 <button
-                                  onClick={() => navigate(`/admin/assembly/${assembly.id}`)}
+                                  onClick={() => navigate(assembly.area === 'press' ? `/admin/press/${assembly.id}` : `/admin/assembly/${assembly.id}`)}
                                   className="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-xs transition-all shadow-md"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
