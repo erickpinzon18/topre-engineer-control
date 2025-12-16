@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 
 const WeeklyMeetings = () => {
   const navigate = useNavigate();
+  const { userProfile } = useAuth();
   const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +45,15 @@ const WeeklyMeetings = () => {
 
   const formatDate = (date) => {
     return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+  };
+
+  // Obtener ruta de inicio según perfil
+  const getHomeRoute = () => {
+    if (userProfile?.type === 'admin') return '/admin';
+    const section = userProfile?.section || 'assy';
+    if (section === 'press') return '/engineer/press';
+    if (section === 'hot-press') return '/engineer/hot-press';
+    return '/engineer/assy';
   };
 
   useEffect(() => {
@@ -110,6 +121,19 @@ const WeeklyMeetings = () => {
       <Navbar />
 
       <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Back Button */}
+        <div className="mb-4">
+          <button
+            onClick={() => navigate(getHomeRoute())}
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            Volver al Inicio
+          </button>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>

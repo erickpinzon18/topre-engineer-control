@@ -8,7 +8,7 @@ import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 
-// Componente de celda editable - FUERA del componente principal para evitar re-creación
+// Componente de celda editable
 const EditableCell = memo(({ 
   rowId, 
   cellName, 
@@ -18,30 +18,25 @@ const EditableCell = memo(({
   lock,
   currentUserId,
   onUpdate,
-  statusColors,
-  areaColors
+  statusColors = {},
+  className = ''
 }) => {
   const [value, setValue] = useState(initialValue || '');
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
   
-  // Verificar si está bloqueado por otro usuario
   const isLockedByOther = () => {
     if (!lock) return false;
-    
-    // Timeout de 30 segundos
     if (lock.lockedAt) {
       const lockTime = lock.lockedAt.toDate ? lock.lockedAt.toDate() : new Date(lock.lockedAt);
       const now = new Date();
       if (now - lockTime > 30000) return false;
     }
-    
     return lock.userId !== currentUserId;
   };
 
   const isLocked = isLockedByOther();
 
-  // Solo actualizar el valor local si NO estamos editando
   useEffect(() => {
     if (!isEditing) {
       setValue(initialValue || '');
@@ -64,9 +59,7 @@ const EditableCell = memo(({
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.target.blur();
-    }
+    if (e.key === 'Enter') e.target.blur();
     if (e.key === 'Escape') {
       setValue(initialValue || '');
       setIsEditing(false);
@@ -74,7 +67,6 @@ const EditableCell = memo(({
     }
   };
 
-  // Celda bloqueada por otro usuario
   if (isLocked) {
     return (
       <div className="relative">
@@ -88,7 +80,6 @@ const EditableCell = memo(({
     );
   }
 
-  // Selector
   if (type === 'select' && options) {
     return (
       <select
@@ -97,10 +88,7 @@ const EditableCell = memo(({
           setValue(e.target.value);
           onUpdate(rowId, cellName, e.target.value, 'save');
         }}
-        className={`w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer ${
-          cellName === 'status' ? (statusColors[value] || '') : 
-          cellName === 'area' ? (areaColors[value] || '') : ''
-        }`}
+        className={`w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer ${statusColors[value] || ''} ${className}`}
       >
         {options.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -109,7 +97,6 @@ const EditableCell = memo(({
     );
   }
 
-  // Input de texto
   return (
     <input
       ref={inputRef}
@@ -123,7 +110,7 @@ const EditableCell = memo(({
         isEditing 
           ? 'border-indigo-500 ring-2 ring-indigo-200 bg-indigo-50' 
           : 'border-gray-300 hover:border-gray-400'
-      }`}
+      } ${className}`}
       placeholder="-"
     />
   );
@@ -134,11 +121,22 @@ const WeeklyMeetingDetail = () => {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
   const [weekData, setWeekData] = useState(null);
-  const [rows, setRows] = useState([]);
+  const [assyRows, setAssyRows] = useState([]);
+  const [pressRows, setPressRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [engineers, setEngineers] = useState([]);
 
-  const DEFAULT_ROWS = 10;
+  const DEFAULT_ROWS = 5;
+
+  const dayOptions = [
+    { value: '', label: '-' },
+    { value: 'Lun', label: 'Lun' },
+    { value: 'Mar', label: 'Mar' },
+    { value: 'Mié', label: 'Mié' },
+    { value: 'Jue', label: 'Jue' },
+    { value: 'Vie', label: 'Vie' },
+    { value: 'Sáb', label: 'Sáb' }
+  ];
 
   const statusOptions = [
     { value: '', label: '-' },
@@ -148,17 +146,15 @@ const WeeklyMeetingDetail = () => {
     { value: 'cancelado', label: 'Cancelado' }
   ];
 
-  const areaOptions = [
-    { value: '', label: '-' },
-    { value: 'ASSY', label: 'ASSY' },
-    { value: 'PRESS', label: 'PRESS' },
-    { value: 'HOT-PRESS', label: 'HOT-PRESS' }
-  ];
-
-  const tipoOptions = [
+  const tipoOptionsAssy = [
     { value: '', label: '-' },
     { value: 'QC', label: 'QC' },
-    { value: 'TEACH', label: 'TEACH' },
+    { value: 'TEACH', label: 'TEACH' }
+  ];
+
+  const tipoOptionsPress = [
+    { value: '', label: '-' },
+    { value: 'QC', label: 'QC' },
     { value: 'LASER', label: 'LASER' }
   ];
 
@@ -170,29 +166,17 @@ const WeeklyMeetingDetail = () => {
     'cancelado': 'bg-red-200'
   };
 
-  const areaColors = {
-    '': '',
-    'ASSY': 'bg-sky-100',
-    'PRESS': 'bg-orange-100',
-    'HOT-PRESS': 'bg-red-100'
-  };
-
-  // Obtener fechas de la semana
   const getWeekDates = (weekId) => {
     const [year, week] = weekId.split('-W');
     const yearNum = parseInt(year);
     const weekNum = parseInt(week);
-    
     const firstDayOfYear = new Date(yearNum, 0, 1);
     const daysToMonday = (8 - firstDayOfYear.getDay()) % 7;
     const firstMonday = new Date(yearNum, 0, 1 + daysToMonday);
-    
     const startDate = new Date(firstMonday);
     startDate.setDate(startDate.getDate() + (weekNum - 1) * 7);
-    
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 6);
-    
     return { startDate, endDate };
   };
 
@@ -200,11 +184,10 @@ const WeeklyMeetingDetail = () => {
     return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
-  // Crear filas vacías iniciales
-  const createEmptyRow = (index) => ({
-    id: `row-${index}`,
+  const createEmptyRow = (index, area) => ({
+    id: `${area}-row-${index}`,
     rowIndex: index,
-    area: '',
+    area: area,
     tipo: '',
     maquina: '',
     modelo: '',
@@ -212,16 +195,14 @@ const WeeklyMeetingDetail = () => {
     status: '',
     comentarios: '',
     responsable: '',
-    responsableUid: '',
+    dia: '',
     updatedAt: null,
     locks: {}
   });
 
-  // Inicializar semana con filas vacías
   const initializeWeek = async () => {
     const weekRef = doc(db, 'weeklyMeetings', weekId);
     const weekSnap = await getDoc(weekRef);
-    
     const { startDate, endDate } = getWeekDates(weekId);
     const [year, week] = weekId.split('-W');
     
@@ -231,23 +212,23 @@ const WeeklyMeetingDetail = () => {
         year: parseInt(year),
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
-        createdAt: new Date(),
-        rowCount: DEFAULT_ROWS
+        createdAt: new Date()
       };
       await setDoc(weekRef, newWeekData);
       setWeekData(newWeekData);
       
-      // Crear filas vacías
+      // Crear filas vacías para ambas áreas
       const batch = writeBatch(db);
       for (let i = 0; i < DEFAULT_ROWS; i++) {
-        const rowRef = doc(db, 'weeklyMeetings', weekId, 'rows', `row-${i}`);
-        batch.set(rowRef, createEmptyRow(i));
+        const assyRef = doc(db, 'weeklyMeetings', weekId, 'rows', `assy-row-${i}`);
+        batch.set(assyRef, createEmptyRow(i, 'ASSY'));
+        const pressRef = doc(db, 'weeklyMeetings', weekId, 'rows', `press-row-${i}`);
+        batch.set(pressRef, createEmptyRow(i, 'PRESS'));
       }
       await batch.commit();
     } else {
       setWeekData(weekSnap.data());
     }
-    
     setLoading(false);
   };
 
@@ -256,49 +237,40 @@ const WeeklyMeetingDetail = () => {
     loadEngineers();
   }, [weekId]);
 
-  // Cargar lista de ingenieros
   const loadEngineers = async () => {
     try {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('type', '==', 'ing'));
       const querySnapshot = await getDocs(q);
-      
       const engineersList = querySnapshot.docs.map(doc => ({
         id: doc.id,
         name: doc.data().name || doc.data().email
       }));
-      
       setEngineers(engineersList);
     } catch (error) {
       console.error('Error cargando ingenieros:', error);
     }
   };
 
-  // Listener en tiempo real para filas
+  // Listener en tiempo real
   useEffect(() => {
     const rowsRef = collection(db, 'weeklyMeetings', weekId, 'rows');
     const q = query(rowsRef, orderBy('rowIndex', 'asc'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const rowsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      if (rowsData.length > 0) {
-        setRows(rowsData);
-      }
+      const allRows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const assy = allRows.filter(r => r.area === 'ASSY' || r.id.startsWith('assy-'));
+      const press = allRows.filter(r => r.area === 'PRESS' || r.area === 'HOT-PRESS' || r.id.startsWith('press-'));
+      if (assy.length > 0) setAssyRows(assy);
+      if (press.length > 0) setPressRows(press);
     }, (error) => {
       console.error('Error en listener:', error);
     });
-
     return () => unsubscribe();
   }, [weekId]);
 
-  // Manejar actualización de celda
   const handleCellUpdate = async (rowId, cellName, value, action) => {
     const rowRef = doc(db, 'weeklyMeetings', weekId, 'rows', rowId);
-    
     if (action === 'lock') {
       await updateDoc(rowRef, {
         [`locks.${cellName}`]: {
@@ -308,9 +280,7 @@ const WeeklyMeetingDetail = () => {
         }
       });
     } else if (action === 'unlock') {
-      await updateDoc(rowRef, {
-        [`locks.${cellName}`]: null
-      });
+      await updateDoc(rowRef, { [`locks.${cellName}`]: null });
     } else if (action === 'save') {
       await updateDoc(rowRef, {
         [cellName]: value,
@@ -320,30 +290,154 @@ const WeeklyMeetingDetail = () => {
     }
   };
 
-  // Actualizar responsable
   const handleUpdateResponsable = async (rowId, value) => {
     const rowRef = doc(db, 'weeklyMeetings', weekId, 'rows', rowId);
-    await updateDoc(rowRef, {
-      responsable: value,
-      updatedAt: new Date()
-    });
+    await updateDoc(rowRef, { responsable: value, updatedAt: new Date() });
   };
 
-  // Agregar nueva fila
-  const addRow = async () => {
+  const addRow = async (area) => {
+    const rows = area === 'ASSY' ? assyRows : pressRows;
+    const prefix = area === 'ASSY' ? 'assy' : 'press';
     const newIndex = rows.length;
-    const rowRef = doc(db, 'weeklyMeetings', weekId, 'rows', `row-${newIndex}`);
-    await setDoc(rowRef, createEmptyRow(newIndex));
-    
-    const weekRef = doc(db, 'weeklyMeetings', weekId);
-    await updateDoc(weekRef, { rowCount: newIndex + 1 });
+    const rowRef = doc(db, 'weeklyMeetings', weekId, 'rows', `${prefix}-row-${newIndex}`);
+    await setDoc(rowRef, createEmptyRow(newIndex, area));
   };
 
-  // Limpiar fila
-  const clearRow = async (rowId, rowIndex) => {
+  const clearRow = async (rowId, rowIndex, area) => {
     const rowRef = doc(db, 'weeklyMeetings', weekId, 'rows', rowId);
-    await setDoc(rowRef, createEmptyRow(rowIndex));
+    await setDoc(rowRef, createEmptyRow(rowIndex, area));
   };
+
+  // Obtener ruta de inicio según perfil
+  const getHomeRoute = () => {
+    if (userProfile?.type === 'admin') return '/admin';
+    const section = userProfile?.section || 'assy';
+    if (section === 'press') return '/engineer/press';
+    if (section === 'hot-press') return '/engineer/hot-press';
+    return '/engineer/assy';
+  };
+
+  // Componente de tabla reutilizable
+  const MeetingTable = ({ title, rows, area, tipoOptions, bgColor, borderColor }) => (
+    <div className={`bg-white shadow-lg rounded-xl overflow-hidden border-t-4 ${borderColor} mb-6`}>
+      <div className={`px-4 py-3 ${bgColor} border-b border-gray-200`}>
+        <h2 className="text-lg font-bold text-gray-800">{title}</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-100 border-b-2 border-gray-300">
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-8 border-r border-gray-200">#</th>
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-20 border-r border-gray-200">Tipo</th>
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-28 border-r border-gray-200">Máquina</th>
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-24 border-r border-gray-200">Modelo</th>
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-24 border-r border-gray-200">Número</th>
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-28 border-r border-gray-200">Status</th>
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Responsable</th>
+              <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase min-w-[140px] border-r border-gray-200">Comentarios</th>
+              <th className="px-2 py-2 text-center text-xs font-bold text-gray-600 uppercase w-16 border-r border-gray-200">Día</th>
+              <th className="px-2 py-2 text-center text-xs font-bold text-gray-600 uppercase w-10">🗑️</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-50">
+                <td className="px-2 py-1 text-center text-xs text-gray-500 font-mono bg-gray-50 border-r border-gray-200">
+                  {index + 1}
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <EditableCell 
+                    rowId={row.id} cellName="tipo" initialValue={row.tipo}
+                    type="select" options={tipoOptions}
+                    lock={row.locks?.tipo} currentUserId={currentUser.uid}
+                    onUpdate={handleCellUpdate} statusColors={{}}
+                  />
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <EditableCell 
+                    rowId={row.id} cellName="maquina" initialValue={row.maquina}
+                    lock={row.locks?.maquina} currentUserId={currentUser.uid}
+                    onUpdate={handleCellUpdate}
+                  />
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <EditableCell 
+                    rowId={row.id} cellName="modelo" initialValue={row.modelo}
+                    lock={row.locks?.modelo} currentUserId={currentUser.uid}
+                    onUpdate={handleCellUpdate}
+                  />
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <EditableCell 
+                    rowId={row.id} cellName="numero" initialValue={row.numero}
+                    lock={row.locks?.numero} currentUserId={currentUser.uid}
+                    onUpdate={handleCellUpdate}
+                  />
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <EditableCell 
+                    rowId={row.id} cellName="status" initialValue={row.status}
+                    type="select" options={statusOptions}
+                    lock={row.locks?.status} currentUserId={currentUser.uid}
+                    onUpdate={handleCellUpdate} statusColors={statusColors}
+                  />
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <select
+                    value={row.responsable || ''}
+                    onChange={(e) => handleUpdateResponsable(row.id, e.target.value)}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  >
+                    <option value="">-</option>
+                    {engineers.map(eng => (
+                      <option key={eng.id} value={eng.name}>{eng.name}</option>
+                    ))}
+                  </select>
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <EditableCell 
+                    rowId={row.id} cellName="comentarios" initialValue={row.comentarios}
+                    lock={row.locks?.comentarios} currentUserId={currentUser.uid}
+                    onUpdate={handleCellUpdate}
+                  />
+                </td>
+                <td className="px-1 py-1 border-r border-gray-200">
+                  <EditableCell 
+                    rowId={row.id} cellName="dia" initialValue={row.dia}
+                    type="select" options={dayOptions}
+                    lock={row.locks?.dia} currentUserId={currentUser.uid}
+                    onUpdate={handleCellUpdate} statusColors={{}}
+                  />
+                </td>
+                <td className="px-1 py-1 text-center">
+                  <button
+                    onClick={() => clearRow(row.id, row.rowIndex, area)}
+                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition"
+                    title="Limpiar fila"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="p-3 bg-gray-50 border-t border-gray-200">
+        <button
+          onClick={() => addRow(area)}
+          className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Agregar fila
+        </button>
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -386,200 +480,43 @@ const WeeklyMeetingDetail = () => {
                 {formatDate(startDate)} - {formatDate(endDate)}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                <span className="text-sm">En vivo</span>
-              </div>
-              <button
-                onClick={addRow}
-                className="bg-white text-indigo-600 font-bold py-2 px-4 rounded-lg shadow hover:bg-indigo-50 transition flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Fila
-              </button>
+            <div className="flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              <span className="text-sm">En vivo</span>
             </div>
           </div>
         </div>
 
         {/* Instructions */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm text-yellow-800">
-          <strong>💡 Instrucciones:</strong> Haz clic en cualquier celda para editarla. Los cambios se guardan al salir de la celda. 
-          Si ves un indicador rojo, alguien más está editando esa celda.
+          <strong>💡 Instrucciones:</strong> Haz clic en cualquier celda para editarla. Los cambios se guardan al salir de la celda.
         </div>
 
-        {/* Excel-like Table */}
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100 border-b-2 border-gray-300">
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-10 border-r border-gray-200">#</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-28 border-r border-gray-200">Área</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-24 border-r border-gray-200">Tipo</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Máquina</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-28 border-r border-gray-200">Modelo</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Número</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Status</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase w-40 border-r border-gray-200">Responsable</th>
-                  <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase min-w-[180px] border-r border-gray-200">Comentarios</th>
-                  <th className="px-2 py-3 text-center text-xs font-bold text-gray-600 uppercase w-16">🗑️</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="px-2 py-1 text-center text-xs text-gray-500 font-mono bg-gray-50 border-r border-gray-200">
-                      {index + 1}
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <EditableCell 
-                        rowId={row.id} 
-                        cellName="area" 
-                        initialValue={row.area}
-                        type="select" 
-                        options={areaOptions}
-                        lock={row.locks?.area}
-                        currentUserId={currentUser.uid}
-                        onUpdate={handleCellUpdate}
-                        statusColors={statusColors}
-                        areaColors={areaColors}
-                      />
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <EditableCell 
-                        rowId={row.id} 
-                        cellName="tipo" 
-                        initialValue={row.tipo}
-                        type="select" 
-                        options={tipoOptions}
-                        lock={row.locks?.tipo}
-                        currentUserId={currentUser.uid}
-                        onUpdate={handleCellUpdate}
-                        statusColors={statusColors}
-                        areaColors={areaColors}
-                      />
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <EditableCell 
-                        rowId={row.id} 
-                        cellName="maquina" 
-                        initialValue={row.maquina}
-                        lock={row.locks?.maquina}
-                        currentUserId={currentUser.uid}
-                        onUpdate={handleCellUpdate}
-                        statusColors={statusColors}
-                        areaColors={areaColors}
-                      />
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <EditableCell 
-                        rowId={row.id} 
-                        cellName="modelo" 
-                        initialValue={row.modelo}
-                        lock={row.locks?.modelo}
-                        currentUserId={currentUser.uid}
-                        onUpdate={handleCellUpdate}
-                        statusColors={statusColors}
-                        areaColors={areaColors}
-                      />
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <EditableCell 
-                        rowId={row.id} 
-                        cellName="numero" 
-                        initialValue={row.numero}
-                        lock={row.locks?.numero}
-                        currentUserId={currentUser.uid}
-                        onUpdate={handleCellUpdate}
-                        statusColors={statusColors}
-                        areaColors={areaColors}
-                      />
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <EditableCell 
-                        rowId={row.id} 
-                        cellName="status" 
-                        initialValue={row.status}
-                        type="select" 
-                        options={statusOptions}
-                        lock={row.locks?.status}
-                        currentUserId={currentUser.uid}
-                        onUpdate={handleCellUpdate}
-                        statusColors={statusColors}
-                        areaColors={areaColors}
-                      />
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <select
-                        value={row.responsable || ''}
-                        onChange={(e) => handleUpdateResponsable(row.id, e.target.value)}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                      >
-                        <option value="">-</option>
-                        {engineers.map(eng => (
-                          <option key={eng.id} value={eng.name}>{eng.name}</option>
-                        ))}
-                      </select>
-                    </td>
-                    
-                    <td className="px-1 py-1 border-r border-gray-200">
-                      <EditableCell 
-                        rowId={row.id} 
-                        cellName="comentarios" 
-                        initialValue={row.comentarios}
-                        lock={row.locks?.comentarios}
-                        currentUserId={currentUser.uid}
-                        onUpdate={handleCellUpdate}
-                        statusColors={statusColors}
-                        areaColors={areaColors}
-                      />
-                    </td>
-                    
-                    <td className="px-1 py-1 text-center">
-                      <button
-                        onClick={() => clearRow(row.id, row.rowIndex)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition"
-                        title="Limpiar fila"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          <div className="p-3 bg-gray-50 border-t border-gray-200">
-            <button
-              onClick={addRow}
-              className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Agregar fila
-            </button>
-          </div>
-        </div>
+        {/* Tabla Ensambles */}
+        <MeetingTable 
+          title="📦 Ensambles (ASSY)"
+          rows={assyRows}
+          area="ASSY"
+          tipoOptions={tipoOptionsAssy}
+          bgColor="bg-sky-50"
+          borderColor="border-sky-500"
+        />
+
+        {/* Tabla Prensas */}
+        <MeetingTable 
+          title="⚙️ Prensas (PRESS / HOT-PRESS)"
+          rows={pressRows}
+          area="PRESS"
+          tipoOptions={tipoOptionsPress}
+          bgColor="bg-orange-50"
+          borderColor="border-orange-500"
+        />
 
         {/* Legend */}
-        <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-600">
+        <div className="flex flex-wrap gap-4 text-xs text-gray-600">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-gray-200 rounded"></div>
             <span>Pendiente</span>
