@@ -5,7 +5,7 @@ import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 
-const PressView = () => {
+const HotPressView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -60,14 +60,18 @@ const PressView = () => {
     return diff;
   };
 
-  // Calcular progreso desde campos Press
-  const calculateProgress = (historyData) => {
+  // Calcular progreso desde campos
+  const calculateProgress = (historyData, tipo) => {
     if (!historyData || historyData.length === 0) return 0;
     
     const lastRecord = historyData[0]?.data || {};
-    let porcentaje = lastRecord.porcentajeObtenido || 0;
     
-    // Calcular desde campos individuales si porcentajeObtenido es 0
+    if (tipo === 'LASER') {
+      return parseFloat(lastRecord.porcentajeObtenido) || 0;
+    }
+    
+    // QC type
+    let porcentaje = lastRecord.porcentajeObtenido || 0;
     if (porcentaje === 0 && (lastRecord.mikomi || lastRecord.atari || lastRecord.ajustesExtras)) {
       let cumplidos = 0;
       if (lastRecord.mikomi === 'OK') cumplidos++;
@@ -83,7 +87,7 @@ const PressView = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -95,9 +99,17 @@ const PressView = () => {
   }
 
   const daysRemaining = calculateDaysRemaining();
-  const progress = calculateProgress(history);
+  const isLaser = assembly.tipo === 'LASER';
+  const progress = calculateProgress(history, assembly.tipo);
 
-  const fieldLabels = {
+  const fieldLabels = isLaser ? {
+    fechaAjuste: 'Fecha de Ajuste',
+    puntoCambio: 'Punto de Cambio',
+    porcentajeObtenido: 'Porcentaje Obtenido',
+    pruebaEnsamble: 'Prueba en Ensamble',
+    comentarios: 'Comentarios',
+    numeroParte: 'Número de Parte'
+  } : {
     fechaAjuste: 'Fecha de Ajuste',
     mikomi: 'MIKOMI',
     mikomiPorcentaje: 'Porcentaje MIKOMI',
@@ -121,7 +133,7 @@ const PressView = () => {
         <div className="mb-3 sm:mb-4">
           <button
             onClick={() => navigate('/admin')}
-            className="text-xs sm:text-sm font-medium text-sky-700 hover:text-sky-900 flex items-center"
+            className="text-xs sm:text-sm font-medium text-red-700 hover:text-red-900 flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 mr-1">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -132,18 +144,18 @@ const PressView = () => {
         </div>
 
         {/* Header Card */}
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden mb-4 sm:mb-6 border-l-4 border-orange-600">
+        <div className="bg-white shadow-lg rounded-xl overflow-hidden mb-4 sm:mb-6 border-l-4 border-red-600">
           <div className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-4 sm:space-y-0">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
-                    PRESS
+                  <span className="px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    HOT PRESS
                   </span>
                   <span className={`px-2 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    assembly.tipo === 'QC' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    isLaser ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {assembly.tipo === 'QC' ? 'QC - LEVEL UP' : 'TEACH'}
+                    {isLaser ? 'AJUSTE EN LASER' : 'QC - LEVEL UP'}
                   </span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -158,13 +170,13 @@ const PressView = () => {
               <div className="text-left sm:text-right w-full sm:w-auto">
                 <div className="mb-3">
                   <p className="text-xs sm:text-sm text-gray-500">Progreso Validación</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-orange-600">{progress}%</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-red-600">{progress}%</p>
                 </div>
                 <div className="w-full sm:w-40 bg-gray-200 rounded-full h-2.5 sm:h-3 shadow-inner">
                   <div 
                     className={`h-2.5 sm:h-3 rounded-full transition-all ${
                       progress === 100 ? 'bg-green-500' :
-                      progress >= 66 ? 'bg-orange-500' :
+                      progress >= 66 ? 'bg-red-500' :
                       progress >= 33 ? 'bg-yellow-500' : 'bg-red-500'
                     }`}
                     style={{ width: `${progress}%` }}
@@ -196,10 +208,10 @@ const PressView = () => {
 
         {/* History Section */}
         <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-linear-to-r from-orange-50 to-amber-50 border-b-2 border-orange-200">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-linear-to-r from-red-50 to-rose-50 border-b-2 border-red-200">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="bg-orange-600 p-2 rounded-lg">
+                <div className="bg-red-600 p-2 rounded-lg">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-white">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -213,7 +225,7 @@ const PressView = () => {
                   </p>
                 </div>
               </div>
-              <div className="bg-orange-100 text-orange-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm">
+              <div className="bg-red-100 text-red-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm">
                 Total: {history.length}
               </div>
             </div>
@@ -238,20 +250,20 @@ const PressView = () => {
                       key={record.id} 
                       className={`border rounded-xl overflow-hidden transition-all hover:shadow-lg ${
                         index === 0 
-                          ? 'border-orange-400 shadow-md bg-linear-to-br from-orange-50 to-white' 
+                          ? 'border-red-400 shadow-md bg-linear-to-br from-red-50 to-white' 
                           : 'border-gray-200 bg-white'
                       }`}
                     >
                       {/* Header */}
                       <div className={`px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 ${
                         index === 0 
-                          ? 'bg-linear-to-r from-orange-500 to-orange-600 border-b border-orange-400' 
+                          ? 'bg-linear-to-r from-red-500 to-red-600 border-b border-red-400' 
                           : 'bg-linear-to-r from-gray-100 to-gray-50 border-b border-gray-200'
                       }`}>
                         <div className="flex items-center space-x-2 sm:space-x-3">
                           <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-bold text-sm sm:text-base shadow-md ${
                             index === 0 
-                              ? 'bg-white text-orange-600' 
+                              ? 'bg-white text-red-600' 
                               : 'bg-gray-600 text-white'
                           }`}>
                             {history.length - index}
@@ -262,13 +274,13 @@ const PressView = () => {
                             }`}>
                               Registro #{history.length - index}
                               {index === 0 && (
-                                <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-white text-orange-600 rounded-full">
+                                <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-white text-red-600 rounded-full">
                                   Actual
                                 </span>
                               )}
                             </h4>
                             <p className={`text-xs mt-1 ${
-                              index === 0 ? 'text-orange-100' : 'text-gray-500'
+                              index === 0 ? 'text-red-100' : 'text-gray-500'
                             }`}>
                               {record.createdAt?.toDate ? record.createdAt.toDate().toLocaleDateString('es-MX', { 
                                 year: 'numeric', 
@@ -283,7 +295,7 @@ const PressView = () => {
                         
                         {/* Badge de solo lectura */}
                         <div className={`px-2 sm:px-3 py-1 rounded-lg font-semibold text-xs ${
-                          index === 0 ? 'bg-white text-orange-600' : 'bg-gray-200 text-gray-600'
+                          index === 0 ? 'bg-white text-red-600' : 'bg-gray-200 text-gray-600'
                         }`}>
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -297,7 +309,7 @@ const PressView = () => {
                       <div className="p-4 sm:p-5">
                         {/* User Info */}
                         <div className="mb-4 sm:mb-5 pb-3 sm:pb-4 border-b-2 border-gray-100 flex items-center space-x-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-red-600">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                           </svg>
                           <div>
@@ -306,73 +318,113 @@ const PressView = () => {
                           </div>
                         </div>
 
-                        {/* Data Grid - Press Specific Fields */}
+                        {/* Data Grid - Fields */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {/* ATARI */}
-                          {(recordData.atari || recordData.atariPorcentaje) && (
-                            <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
-                              <p className="text-xs text-gray-600 font-medium mb-1">ATARI</p>
-                              <div className="flex items-center justify-between">
-                                {recordData.atari && (
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                                    recordData.atari === 'OK' 
-                                      ? 'bg-green-100 text-green-800 border border-green-300' 
-                                      : 'bg-red-100 text-red-800 border border-red-300'
-                                  }`}>
-                                    {recordData.atari}
-                                  </span>
-                                )}
-                                {recordData.atariPorcentaje && (
-                                  <span className="text-sm font-bold text-gray-700">{recordData.atariPorcentaje}%</span>
-                                )}
-                              </div>
-                            </div>
+                          {/* QC Fields */}
+                          {!isLaser && (
+                            <>
+                              {/* ATARI */}
+                              {(recordData.atari || recordData.atariPorcentaje) && (
+                                <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                  <p className="text-xs text-gray-600 font-medium mb-1">ATARI</p>
+                                  <div className="flex items-center justify-between">
+                                    {recordData.atari && (
+                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                                        recordData.atari === 'OK' 
+                                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                                          : 'bg-red-100 text-red-800 border border-red-300'
+                                      }`}>
+                                        {recordData.atari}
+                                      </span>
+                                    )}
+                                    {recordData.atariPorcentaje && (
+                                      <span className="text-sm font-bold text-gray-700">{recordData.atariPorcentaje}%</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* MIKOMI */}
+                              {(recordData.mikomi || recordData.mikomiPorcentaje) && (
+                                <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                  <p className="text-xs text-gray-600 font-medium mb-1">MIKOMI</p>
+                                  <div className="flex items-center justify-between">
+                                    {recordData.mikomi && (
+                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                                        recordData.mikomi === 'OK' 
+                                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                                          : 'bg-red-100 text-red-800 border border-red-300'
+                                      }`}>
+                                        {recordData.mikomi}
+                                      </span>
+                                    )}
+                                    {recordData.mikomiPorcentaje && (
+                                      <span className="text-sm font-bold text-gray-700">{recordData.mikomiPorcentaje}%</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* AJUSTES EXTRAS */}
+                              {(recordData.ajustesExtras || recordData.ajustesExtrasPorcentaje) && (
+                                <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                  <p className="text-xs text-gray-600 font-medium mb-1">AJUSTES EXTRAS</p>
+                                  <div className="flex items-center justify-between">
+                                    {recordData.ajustesExtras && (
+                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                                        recordData.ajustesExtras === 'OK' 
+                                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                                          : 'bg-red-100 text-red-800 border border-red-300'
+                                      }`}>
+                                        {recordData.ajustesExtras}
+                                      </span>
+                                    )}
+                                    {recordData.ajustesExtrasPorcentaje && (
+                                      <span className="text-sm font-bold text-gray-700">{recordData.ajustesExtrasPorcentaje}%</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
 
-                          {/* MIKOMI */}
-                          {(recordData.mikomi || recordData.mikomiPorcentaje) && (
-                            <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
-                              <p className="text-xs text-gray-600 font-medium mb-1">MIKOMI</p>
-                              <div className="flex items-center justify-between">
-                                {recordData.mikomi && (
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                                    recordData.mikomi === 'OK' 
-                                      ? 'bg-green-100 text-green-800 border border-green-300' 
-                                      : 'bg-red-100 text-red-800 border border-red-300'
+                          {/* LASER Fields */}
+                          {isLaser && (
+                            <>
+                              {/* Punto de Cambio */}
+                              {recordData.puntoCambio && (
+                                <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                  <p className="text-xs text-gray-600 font-medium mb-1">Punto de Cambio</p>
+                                  <p className="text-sm font-semibold text-gray-900">{recordData.puntoCambio}</p>
+                                </div>
+                              )}
+
+                              {/* Porcentaje Obtenido */}
+                              {recordData.porcentajeObtenido && (
+                                <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                  <p className="text-xs text-gray-600 font-medium mb-1">Porcentaje Obtenido</p>
+                                  <span className="text-sm font-bold text-purple-600">{recordData.porcentajeObtenido}%</span>
+                                </div>
+                              )}
+
+                              {/* Prueba en Ensamble */}
+                              {recordData.pruebaEnsamble && (
+                                <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                  <p className="text-xs text-gray-600 font-medium mb-1">Prueba en Ensamble</p>
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
+                                    recordData.pruebaEnsamble === 'OK' 
+                                      ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+                                      : 'bg-red-100 text-red-800 border-2 border-red-300'
                                   }`}>
-                                    {recordData.mikomi}
+                                    {recordData.pruebaEnsamble}
                                   </span>
-                                )}
-                                {recordData.mikomiPorcentaje && (
-                                  <span className="text-sm font-bold text-gray-700">{recordData.mikomiPorcentaje}%</span>
-                                )}
-                              </div>
-                            </div>
+                                </div>
+                              )}
+                            </>
                           )}
 
-                          {/* AJUSTES EXTRAS */}
-                          {(recordData.ajustesExtras || recordData.ajustesExtrasPorcentaje) && (
-                            <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
-                              <p className="text-xs text-gray-600 font-medium mb-1">AJUSTES EXTRAS</p>
-                              <div className="flex items-center justify-between">
-                                {recordData.ajustesExtras && (
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                                    recordData.ajustesExtras === 'OK' 
-                                      ? 'bg-green-100 text-green-800 border border-green-300' 
-                                      : 'bg-red-100 text-red-800 border border-red-300'
-                                  }`}>
-                                    {recordData.ajustesExtras}
-                                  </span>
-                                )}
-                                {recordData.ajustesExtrasPorcentaje && (
-                                  <span className="text-sm font-bold text-gray-700">{recordData.ajustesExtrasPorcentaje}%</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Estado */}
-                          {recordData.estado && (
+                          {/* Estado (QC only) */}
+                          {!isLaser && recordData.estado && (
                             <div className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
                               <p className="text-xs text-gray-600 font-medium mb-1">Estado</p>
                               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
@@ -416,7 +468,7 @@ const PressView = () => {
                         {recordData.fotos && recordData.fotos.length > 0 && (
                           <div className="mt-4 pt-4 border-t-2 border-gray-200">
                             <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2 text-orange-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2 text-red-600">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
                               </svg>
@@ -454,4 +506,4 @@ const PressView = () => {
   );
 };
 
-export default PressView;
+export default HotPressView;

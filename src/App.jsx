@@ -9,6 +9,8 @@ import PressDashboard from './pages/PressDashboard';
 import PressDetail from './pages/PressDetail';
 import PressView from './pages/PressView';
 import HotPressDashboard from './pages/HotPressDashboard';
+import HotPressDetail from './pages/HotPressDetail';
+import HotPressView from './pages/HotPressView';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -65,7 +67,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          {/* Aquí irán las rutas de detalle de Hot-Press cuando se desarrollen */}
+          <Route 
+            path="/engineer/hot-press/:id" 
+            element={
+              <ProtectedRoute requireEngineer={true} allowedSections={['hot-press']}>
+                <HotPressDetail />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* Ruta legacy /engineer redirige según sección (se maneja en Login) */}
           <Route path="/engineer" element={<Navigate to="/login" replace />} />
@@ -92,6 +101,14 @@ function App() {
             element={
               <ProtectedRoute requireAdmin={true}>
                 <PressView />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/hot-press/:id" 
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <HotPressView />
               </ProtectedRoute>
             } 
           />

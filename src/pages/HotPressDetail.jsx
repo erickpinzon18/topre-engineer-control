@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import PhotoUploader from '../components/PhotoUploader';
 
-const PressDetail = () => {
+const HotPressDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
@@ -34,7 +34,35 @@ const PressDetail = () => {
     loadData();
   }, [id]);
 
-  const loadHistory = async () => {
+  const initializeFormData = (tipo) => {
+    if (tipo === 'LASER') {
+      return {
+        fechaAjuste: toLocalDateTimeString(new Date()),
+        puntoCambio: '',
+        porcentajeObtenido: '',
+        pruebaEnsamble: '',
+        comentarios: '',
+        fotos: []
+      };
+    } else {
+      // QC - same as Press
+      return {
+        fechaAjuste: toLocalDateTimeString(new Date()),
+        mikomi: '',
+        mikomiPorcentaje: '',
+        atari: '',
+        atariPorcentaje: '',
+        ajustesExtras: '',
+        ajustesExtrasPorcentaje: '',
+        comentarios: '',
+        fotos: [],
+        estado: 'Pendiente',
+        porcentajeObtenido: 0
+      };
+    }
+  };
+
+  const loadHistory = async (tipo) => {
     try {
       const historyRef = collection(db, 'assemblies', id, 'history');
       const q = query(historyRef, orderBy('createdAt', 'desc'));
@@ -47,21 +75,7 @@ const PressDetail = () => {
       }));
       
       setHistory(historyData);
-      
-      // Inicializar formulario vacío siempre
-      setFormData({
-        fechaAjuste: toLocalDateTimeString(new Date()),
-        mikomi: '',
-        mikomiPorcentaje: '',
-        atari: '',
-        atariPorcentaje: '',
-        ajustesExtras: '',
-        ajustesExtrasPorcentaje: '',
-        comentarios: '',
-        fotos: [],
-        estado: 'Pendiente',
-        porcentajeObtenido: 0
-      });
+      setFormData(initializeFormData(tipo));
       
       return historyData.length > 0;
     } catch (error) {
@@ -78,12 +92,10 @@ const PressDetail = () => {
       if (docSnap.exists()) {
         const data = { id: docSnap.id, ...docSnap.data() };
         setAssembly(data);
-        
-        // Cargar historial
-        await loadHistory();
+        await loadHistory(data.tipo);
       } else {
         alert('Ajuste no encontrado');
-        navigate('/engineer/press');
+        navigate('/engineer/hot-press');
       }
     } catch (error) {
       console.error('Error cargando ajuste:', error);
@@ -110,48 +122,30 @@ const PressDetail = () => {
       [name]: value
     }));
 
-    // Calcular porcentaje y estado automáticamente basado en los 3 checks
-    const calcularPorcentajePress = () => {
-      const campos = [
-        { campo: 'mikomi', valorOK: 'OK' },
-        { campo: 'atari', valorOK: 'OK' },
-        { campo: 'ajustesExtras', valorOK: 'OK' }
-      ];
+    // Para QC, calcular porcentaje y estado automáticamente basado en los 3 checks
+    if (assembly?.tipo === 'QC') {
+      const camposValidacion = ['mikomi', 'atari', 'ajustesExtras'];
 
-      // Usar el valor actual si está siendo cambiado
-      const getValor = (campo) => {
-        if (name === campo) return value;
-        return formData[campo];
-      };
+      if (camposValidacion.includes(name)) {
+        const getValor = (campo) => {
+          if (name === campo) return value;
+          return formData[campo];
+        };
 
-      let cumplidos = 0;
+        let cumplidos = 0;
+        if (getValor('mikomi') === 'OK') cumplidos++;
+        if (getValor('atari') === 'OK') cumplidos++;
+        if (getValor('ajustesExtras') === 'OK') cumplidos++;
 
-      campos.forEach(({ campo, valorOK }) => {
-        const val = getValor(campo);
-        if (val === valorOK) {
-          cumplidos++;
-        }
-      });
+        const porcentaje = Math.round((cumplidos / 3) * 100);
+        const estado = cumplidos === 3 ? 'OK' : 'Pendiente';
 
-      // 33% por cada uno: 0% = 0, 33% = 1, 66% = 2, 100% = 3
-      const porcentaje = Math.round((cumplidos / 3) * 100);
-      
-      // OK si los 3 están OK, de lo contrario Pendiente
-      const estado = cumplidos === 3 ? 'OK' : 'Pendiente';
-
-      return { porcentaje, estado };
-    };
-
-    // Si se cambió alguno de los campos de validación, recalcular
-    const camposValidacion = ['mikomi', 'atari', 'ajustesExtras'];
-
-    if (camposValidacion.includes(name)) {
-      const { porcentaje, estado } = calcularPorcentajePress();
-      setFormData(prev => ({
-        ...prev,
-        porcentajeObtenido: porcentaje,
-        estado: estado
-      }));
+        setFormData(prev => ({
+          ...prev,
+          porcentajeObtenido: porcentaje,
+          estado: estado
+        }));
+      }
     }
   };
 
@@ -160,20 +154,24 @@ const PressDetail = () => {
     setFormData(prev => {
       const newData = { ...prev, [campo]: valor };
       
-      // Recalcular porcentaje basado en los 3 campos
-      let cumplidos = 0;
-      if (newData.mikomi === 'OK') cumplidos++;
-      if (newData.atari === 'OK') cumplidos++;
-      if (newData.ajustesExtras === 'OK') cumplidos++;
+      // Para QC, recalcular porcentaje basado en los 3 campos
+      if (assembly?.tipo === 'QC') {
+        let cumplidos = 0;
+        if (newData.mikomi === 'OK') cumplidos++;
+        if (newData.atari === 'OK') cumplidos++;
+        if (newData.ajustesExtras === 'OK') cumplidos++;
+        
+        const porcentaje = Math.round((cumplidos / 3) * 100);
+        const estado = cumplidos === 3 ? 'OK' : 'Pendiente';
+        
+        return {
+          ...newData,
+          porcentajeObtenido: porcentaje,
+          estado: estado
+        };
+      }
       
-      const porcentaje = Math.round((cumplidos / 3) * 100);
-      const estado = cumplidos === 3 ? 'OK' : 'Pendiente';
-      
-      return {
-        ...newData,
-        porcentajeObtenido: porcentaje,
-        estado: estado
-      };
+      return newData;
     });
   };
 
@@ -185,17 +183,21 @@ const PressDetail = () => {
       const now = new Date();
       const dataToSave = { 
         ...formData,
-        numeroParte: assembly.numero,  // Guardar número de parte
-        fechaRegistro: now.toISOString()  // Guardar fecha del registro
+        numeroParte: assembly.numero,
+        fechaRegistro: now.toISOString()
       };
       
-      // Si el campo fechaAjuste está vacío, establecer la fecha actual
       if (!dataToSave.fechaAjuste) {
         dataToSave.fechaAjuste = toLocalDateTimeString(now);
       }
       
-      // El progreso se calcula del porcentaje obtenido
-      const progress = dataToSave.porcentajeObtenido || 0;
+      // El progreso se calcula según el tipo
+      let progress = 0;
+      if (assembly.tipo === 'LASER') {
+        progress = parseFloat(dataToSave.porcentajeObtenido) || 0;
+      } else {
+        progress = dataToSave.porcentajeObtenido || 0;
+      }
 
       // Guardar en la subcolección history
       const historyRef = collection(db, 'assemblies', id, 'history');
@@ -222,21 +224,8 @@ const PressDetail = () => {
       alert('Información guardada exitosamente');
       
       // Limpiar el formulario
-      setFormData({
-        fechaAjuste: toLocalDateTimeString(new Date()),
-        mikomi: '',
-        mikomiPorcentaje: '',
-        atari: '',
-        atariPorcentaje: '',
-        ajustesExtras: '',
-        ajustesExtrasPorcentaje: '',
-        comentarios: '',
-        fotos: [],
-        estado: 'Pendiente',
-        porcentajeObtenido: 0
-      });
-      
-      loadHistory(); // Recargar historial
+      setFormData(initializeFormData(assembly.tipo));
+      loadHistory(assembly.tipo);
     } catch (error) {
       console.error('Error guardando:', error);
       alert('Error al guardar la información');
@@ -252,7 +241,7 @@ const PressDetail = () => {
       const recordRef = doc(db, 'assemblies', id, 'history', recordId);
       await deleteDoc(recordRef);
       alert('Registro eliminado exitosamente');
-      loadHistory(); // Recargar historial
+      loadHistory(assembly.tipo);
     } catch (error) {
       console.error('Error eliminando registro:', error);
       alert('Error al eliminar el registro');
@@ -260,8 +249,8 @@ const PressDetail = () => {
   };
 
   const calculateDaysRemaining = () => {
-    if (!assembly?.fechaPrestamo) return 0;
-    const deadline = new Date(assembly.fechaPrestamo);
+    if (!assembly?.fechaDeadline) return 0;
+    const deadline = new Date(assembly.fechaDeadline);
     const today = new Date();
     const diffTime = deadline - today;
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -271,7 +260,7 @@ const PressDetail = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -283,18 +272,25 @@ const PressDetail = () => {
   }
 
   const daysRemaining = calculateDaysRemaining();
-  // Obtener el porcentaje y estado del último registro (los datos están anidados en .data)
+  const isLaser = assembly.tipo === 'LASER';
+  
+  // Obtener el porcentaje y estado del último registro
   const lastRecord = history.length > 0 ? history[0] : null;
   const lastRecordData = lastRecord?.data || {};
   
-  // Calcular porcentaje desde campos individuales si no hay porcentajeObtenido
-  let progress = lastRecordData.porcentajeObtenido || 0;
-  if (progress === 0 && (lastRecordData.mikomi || lastRecordData.atari || lastRecordData.ajustesExtras)) {
-    let cumplidos = 0;
-    if (lastRecordData.mikomi === 'OK') cumplidos++;
-    if (lastRecordData.atari === 'OK') cumplidos++;
-    if (lastRecordData.ajustesExtras === 'OK') cumplidos++;
-    progress = Math.round((cumplidos / 3) * 100);
+  // Calcular progreso desde campos individuales si no hay porcentajeObtenido
+  let progress = 0;
+  if (isLaser) {
+    progress = parseFloat(lastRecordData.porcentajeObtenido) || 0;
+  } else {
+    progress = lastRecordData.porcentajeObtenido || 0;
+    if (progress === 0 && (lastRecordData.mikomi || lastRecordData.atari || lastRecordData.ajustesExtras)) {
+      let cumplidos = 0;
+      if (lastRecordData.mikomi === 'OK') cumplidos++;
+      if (lastRecordData.atari === 'OK') cumplidos++;
+      if (lastRecordData.ajustesExtras === 'OK') cumplidos++;
+      progress = Math.round((cumplidos / 3) * 100);
+    }
   }
   
   const currentStatus = progress === 100 ? 'OK' : (lastRecordData.estado || 'Pendiente');
@@ -310,8 +306,8 @@ const PressDetail = () => {
         {/* Back Link */}
         <div className="mb-4">
           <button
-            onClick={() => navigate('/engineer/press')}
-            className="text-sm font-medium text-sky-700 hover:text-sky-900 flex items-center"
+            onClick={() => navigate('/engineer/hot-press')}
+            className="text-sm font-medium text-red-700 hover:text-red-900 flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -329,8 +325,10 @@ const PressDetail = () => {
             {/* General Info Card */}
             <div className="bg-white shadow-lg rounded-lg overflow-hidden">
               <div className="p-4 sm:p-5">
-                <span className="px-2.5 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                  Tipo: QC
+                <span className={`px-2.5 sm:px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                  isLaser ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                }`}>
+                  Tipo: {isLaser ? 'AJUSTE EN LASER' : 'QC'}
                 </span>
                 <h2 className="mt-3 text-lg sm:text-2xl font-semibold text-gray-800">
                   Ajuste: {assembly.maquina} / {assembly.modelo}
@@ -343,67 +341,69 @@ const PressDetail = () => {
             <div className="bg-white shadow-lg rounded-lg overflow-hidden">
               <div className="p-4 sm:p-5">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-5">
-                  Ajuste en Troquel
+                  {isLaser ? 'Ajuste en Laser' : 'Ajuste en Troquel'}
                 </h3>
 
                 <form className="space-y-4">
                   
-                  {/* Meta Indicator - Editable */}
-                  <div className="bg-sky-50 border-l-4 border-sky-500 p-3 sm:p-4 mb-4">
-                    <div className="flex items-start sm:items-center justify-between">
-                      <div className="flex items-start sm:items-center">
-                        <div className="shrink-0">
-                          <svg className="h-5 w-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                          </svg>
+                  {/* Meta Indicator - Editable (solo para QC) */}
+                  {!isLaser && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 mb-4">
+                      <div className="flex items-start sm:items-center justify-between">
+                        <div className="flex items-start sm:items-center">
+                          <div className="shrink-0">
+                            <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-xs sm:text-sm text-red-700">
+                              <span className="font-semibold">Porcentaje Meta: {assembly.porcentajeMeta || '97'}%</span> - Alcanzar este valor para estado OK
+                            </p>
+                          </div>
                         </div>
-                        <div className="ml-3">
-                          <p className="text-xs sm:text-sm text-sky-700">
-                            <span className="font-semibold">Porcentaje Meta: {assembly.porcentajeMeta || '97'}%</span> - Alcanzar este valor para estado OK
-                          </p>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={assembly.porcentajeMeta || ''}
+                            onChange={(e) => handleAssemblyFieldChange('porcentajeMeta', e.target.value)}
+                            onBlur={(e) => {
+                              if (!e.target.value) {
+                                handleAssemblyFieldChange('porcentajeMeta', '97');
+                              }
+                            }}
+                            placeholder="97"
+                            className="w-16 px-2 py-1 text-sm border border-red-300 rounded focus:ring-red-500 focus:border-red-500"
+                          />
+                          <span className="text-xs text-red-600">%</span>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={assembly.porcentajeMeta || ''}
-                          onChange={(e) => handleAssemblyFieldChange('porcentajeMeta', e.target.value)}
-                          onBlur={(e) => {
-                            if (!e.target.value) {
-                              handleAssemblyFieldChange('porcentajeMeta', '97');
-                            }
-                          }}
-                          placeholder="97"
-                          className="w-16 px-2 py-1 text-sm border border-sky-300 rounded focus:ring-sky-500 focus:border-sky-500"
-                        />
-                        <span className="text-xs text-sky-600">%</span>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Barra de Progreso de Validación */}
                   <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-semibold text-gray-800">Progreso de Validación</h4>
                       <span className={`text-lg font-bold ${
-                        formData.porcentajeObtenido === 100 ? 'text-green-600' : 
-                        formData.porcentajeObtenido > 0 ? 'text-orange-600' : 'text-gray-400'
+                        (isLaser ? parseFloat(formData.porcentajeObtenido) >= 100 : formData.porcentajeObtenido === 100) ? 'text-green-600' : 
+                        (parseFloat(formData.porcentajeObtenido) || 0) > 0 ? 'text-orange-600' : 'text-gray-400'
                       }`}>{formData.porcentajeObtenido || 0}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
                         className={`h-3 rounded-full transition-all duration-300 ${
-                          formData.porcentajeObtenido === 100 ? 'bg-green-500' : 
-                          formData.porcentajeObtenido > 0 ? 'bg-orange-500' : 'bg-gray-300'
+                          (isLaser ? parseFloat(formData.porcentajeObtenido) >= 100 : formData.porcentajeObtenido === 100) ? 'bg-green-500' : 
+                          (parseFloat(formData.porcentajeObtenido) || 0) > 0 ? 'bg-orange-500' : 'bg-gray-300'
                         }`}
-                        style={{ width: `${formData.porcentajeObtenido || 0}%` }}
+                        style={{ width: `${Math.min(parseFloat(formData.porcentajeObtenido) || 0, 100)}%` }}
                       ></div>
                     </div>
                     <p className="mt-2 text-xs text-gray-500">
-                      Si todos los campos están en OK, el progreso será 100% y el estado OK
+                      {isLaser ? 'El progreso se basa en el porcentaje obtenido' : 'Si todos los campos están en OK, el progreso será 100% y el estado OK'}
                     </p>
                   </div>
 
@@ -416,168 +416,248 @@ const PressDetail = () => {
                       name="fechaAjuste"
                       value={formData.fechaAjuste || ''}
                       onChange={handleChange}
-                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
+                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
 
-                  {/* Checklist de Validación */}
-                  <div className="mb-6 p-4 bg-linear-to-br from-blue-50 to-sky-50 rounded-lg border-2 border-blue-200">
-                    <h4 className="text-md font-bold text-blue-900 mb-4 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-2 text-blue-600">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Checklist de Validación Press
-                    </h4>
-                    
-                    <div className="space-y-4">
-                      {/* 1. ATARI */}
-                      <div className="p-3 bg-white rounded-lg border border-gray-200">
-                        <label className="block text-sm font-medium text-gray-800 mb-2">
-                          1. ATARI
-                        </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          <div className="flex items-center space-x-3">
-                            <button
-                              type="button"
-                              onClick={() => handleCheckChange('atari', 'OK')}
-                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
-                                formData.atari === 'OK'
-                                  ? 'bg-green-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              OK
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCheckChange('atari', 'NG')}
-                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
-                                formData.atari === 'NG'
-                                  ? 'bg-red-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              NG
-                            </button>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
-                              Porcentaje Obtenido
-                            </label>
-                            <input
-                              type="number"
-                              name="atariPorcentaje"
-                              value={formData.atariPorcentaje || ''}
-                              onChange={handleChange}
-                              placeholder="Ej: 96.8"
-                              step="0.1"
-                              min="0"
-                              max="100"
-                              className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 2. MIKOMI */}
-                      <div className="p-3 bg-white rounded-lg border border-gray-200">
-                        <label className="block text-sm font-medium text-gray-800 mb-2">
-                          2. MIKOMI
-                        </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          <div className="flex items-center space-x-3">
-                            <button
-                              type="button"
-                              onClick={() => handleCheckChange('mikomi', 'OK')}
-                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
-                                formData.mikomi === 'OK'
-                                  ? 'bg-green-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              OK
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCheckChange('mikomi', 'NG')}
-                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
-                                formData.mikomi === 'NG'
-                                  ? 'bg-red-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              NG
-                            </button>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
-                              Porcentaje Obtenido
-                            </label>
-                            <input
-                              type="number"
-                              name="mikomiPorcentaje"
-                              value={formData.mikomiPorcentaje || ''}
-                              onChange={handleChange}
-                              placeholder="Ej: 98.5"
-                              step="0.1"
-                              min="0"
-                              max="100"
-                              className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                            />
+                  {/* QC Checklist de Validación */}
+                  {!isLaser && (
+                    <div className="mb-6 p-4 bg-linear-to-br from-blue-50 to-sky-50 rounded-lg border-2 border-blue-200">
+                      <h4 className="text-md font-bold text-blue-900 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-2 text-blue-600">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Checklist de Validación Hot Press
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        {/* 1. ATARI */}
+                        <div className="p-3 bg-white rounded-lg border border-gray-200">
+                          <label className="block text-sm font-medium text-gray-800 mb-2">
+                            1. ATARI
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => handleCheckChange('atari', 'OK')}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.atari === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCheckChange('atari', 'NG')}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.atari === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG
+                              </button>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Porcentaje Obtenido
+                              </label>
+                              <input
+                                type="number"
+                                name="atariPorcentaje"
+                                value={formData.atariPorcentaje || ''}
+                                onChange={handleChange}
+                                placeholder="Ej: 96.8"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* 3. AJUSTES EXTRAS */}
-                      <div className="p-3 bg-white rounded-lg border border-gray-200">
-                        <label className="block text-sm font-medium text-gray-800 mb-2">
-                          3. AJUSTES EXTRAS
-                        </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          <div className="flex items-center space-x-3">
-                            <button
-                              type="button"
-                              onClick={() => handleCheckChange('ajustesExtras', 'OK')}
-                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
-                                formData.ajustesExtras === 'OK'
-                                  ? 'bg-green-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              OK
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCheckChange('ajustesExtras', 'NG')}
-                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
-                                formData.ajustesExtras === 'NG'
-                                  ? 'bg-red-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              NG
-                            </button>
+                        {/* 2. MIKOMI */}
+                        <div className="p-3 bg-white rounded-lg border border-gray-200">
+                          <label className="block text-sm font-medium text-gray-800 mb-2">
+                            2. MIKOMI
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => handleCheckChange('mikomi', 'OK')}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.mikomi === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCheckChange('mikomi', 'NG')}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.mikomi === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG
+                              </button>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Porcentaje Obtenido
+                              </label>
+                              <input
+                                type="number"
+                                name="mikomiPorcentaje"
+                                value={formData.mikomiPorcentaje || ''}
+                                onChange={handleChange}
+                                placeholder="Ej: 98.5"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
-                              Porcentaje Obtenido
-                            </label>
-                            <input
-                              type="number"
-                              name="ajustesExtrasPorcentaje"
-                              value={formData.ajustesExtrasPorcentaje || ''}
-                              onChange={handleChange}
-                              placeholder="Ej: 97.2"
-                              step="0.1"
-                              min="0"
-                              max="100"
-                              className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                            />
+                        </div>
+
+                        {/* 3. AJUSTES EXTRAS */}
+                        <div className="p-3 bg-white rounded-lg border border-gray-200">
+                          <label className="block text-sm font-medium text-gray-800 mb-2">
+                            3. AJUSTES EXTRAS
+                          </label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div className="flex items-center space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => handleCheckChange('ajustesExtras', 'OK')}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.ajustesExtras === 'OK'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCheckChange('ajustesExtras', 'NG')}
+                                className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                  formData.ajustesExtras === 'NG'
+                                    ? 'bg-red-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                NG
+                              </button>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Porcentaje Obtenido
+                              </label>
+                              <input
+                                type="number"
+                                name="ajustesExtrasPorcentaje"
+                                value={formData.ajustesExtrasPorcentaje || ''}
+                                onChange={handleChange}
+                                placeholder="Ej: 97.2"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* LASER Form Fields */}
+                  {isLaser && (
+                    <div className="mb-6 p-4 bg-linear-to-br from-purple-50 to-violet-50 rounded-lg border-2 border-purple-200">
+                      <h4 className="text-md font-bold text-purple-900 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mr-2 text-purple-600">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                        </svg>
+                        Datos del Ajuste en Laser
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        {/* 1. Punto de Cambio */}
+                        <div className="p-3 bg-white rounded-lg border border-gray-200">
+                          <label className="block text-sm font-medium text-gray-800 mb-2">
+                            1. Punto de Cambio
+                          </label>
+                          <input
+                            type="text"
+                            name="puntoCambio"
+                            value={formData.puntoCambio || ''}
+                            onChange={handleChange}
+                            placeholder="Ingrese el punto de cambio"
+                            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+
+                        {/* 2. Porcentaje Obtenido */}
+                        <div className="p-3 bg-white rounded-lg border border-gray-200">
+                          <label className="block text-sm font-medium text-gray-800 mb-2">
+                            2. Porcentaje Obtenido
+                          </label>
+                          <input
+                            type="number"
+                            name="porcentajeObtenido"
+                            value={formData.porcentajeObtenido || ''}
+                            onChange={handleChange}
+                            placeholder="Ej: 97.5"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+
+                        {/* 3. Prueba en Ensamble */}
+                        <div className="p-3 bg-white rounded-lg border border-gray-200">
+                          <label className="block text-sm font-medium text-gray-800 mb-2">
+                            3. Prueba en Ensamble (Juicio)
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <button
+                              type="button"
+                              onClick={() => handleCheckChange('pruebaEnsamble', 'OK')}
+                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                formData.pruebaEnsamble === 'OK'
+                                  ? 'bg-green-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              OK
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCheckChange('pruebaEnsamble', 'NG')}
+                              className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all text-sm ${
+                                formData.pruebaEnsamble === 'NG'
+                                  ? 'bg-red-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              NG
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Evidencia Fotográfica */}
                   <PhotoUploader
@@ -597,7 +677,7 @@ const PressDetail = () => {
                       onChange={handleChange}
                       rows="3"
                       placeholder="Observaciones o notas adicionales..."
-                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
+                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
 
@@ -606,7 +686,7 @@ const PressDetail = () => {
                     <button
                       type="button"
                       onClick={handleSave}
-                      className="w-full bg-sky-700 hover:bg-sky-800 text-white font-bold py-3 px-4 rounded-lg shadow-md transition"
+                      className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-4 rounded-lg shadow-md transition"
                     >
                       Guardar Información
                     </button>
@@ -621,7 +701,7 @@ const PressDetail = () => {
               <div className="px-4 sm:px-6 py-4 sm:py-5 bg-linear-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-sky-600 p-2 rounded-lg">
+                    <div className="bg-red-600 p-2 rounded-lg">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-white">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -635,7 +715,7 @@ const PressDetail = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-sky-100 text-sky-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm self-start">
+                  <div className="bg-red-100 text-red-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm self-start">
                     Total: {history.length}
                   </div>
                 </div>
@@ -653,7 +733,14 @@ const PressDetail = () => {
                 ) : (
                   <div className="space-y-5">
                     {history.map((record, index) => {
-                      const fieldLabels = {
+                      const fieldLabels = isLaser ? {
+                        fechaAjuste: 'Fecha de Ajuste',
+                        puntoCambio: 'Punto de Cambio',
+                        porcentajeObtenido: 'Porcentaje Obtenido',
+                        pruebaEnsamble: 'Prueba en Ensamble',
+                        comentarios: 'Comentarios',
+                        numeroParte: 'Número de Parte'
+                      } : {
                         fechaAjuste: 'Fecha de Ajuste',
                         mikomi: 'MIKOMI',
                         mikomiPorcentaje: 'Porcentaje MIKOMI',
@@ -672,20 +759,20 @@ const PressDetail = () => {
                           key={record.id} 
                           className={`border rounded-xl overflow-hidden transition-all hover:shadow-lg ${
                             index === 0 
-                              ? 'border-sky-400 shadow-md bg-linear-to-br from-sky-50 to-white' 
+                              ? 'border-red-400 shadow-md bg-linear-to-br from-red-50 to-white' 
                               : 'border-gray-200 bg-white'
                           }`}
                         >
                           {/* Header */}
                           <div className={`px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between ${
                             index === 0 
-                              ? 'bg-linear-to-r from-sky-500 to-sky-600 border-b border-sky-400' 
+                              ? 'bg-linear-to-r from-red-500 to-red-600 border-b border-red-400' 
                               : 'bg-linear-to-r from-gray-100 to-gray-50 border-b border-gray-200'
                           }`}>
                             <div className="flex items-center space-x-2 sm:space-x-3">
                               <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-bold text-sm sm:text-base shadow-md ${
                                 index === 0 
-                                  ? 'bg-white text-sky-600' 
+                                  ? 'bg-white text-red-600' 
                                   : 'bg-gray-600 text-white'
                               }`}>
                                 {history.length - index}
@@ -696,13 +783,13 @@ const PressDetail = () => {
                                 }`}>
                                   Registro #{history.length - index}
                                   {index === 0 && (
-                                    <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-white text-sky-600 rounded-full">
+                                    <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-white text-red-600 rounded-full">
                                       Actual
                                     </span>
                                   )}
                                 </h4>
                                 <p className={`text-xs mt-1 ${
-                                  index === 0 ? 'text-sky-100' : 'text-gray-500'
+                                  index === 0 ? 'text-red-100' : 'text-gray-500'
                                 }`}>
                                   {record.createdAt?.toLocaleDateString('es-MX', { 
                                     year: 'numeric', 
@@ -718,7 +805,7 @@ const PressDetail = () => {
                               onClick={() => handleDeleteRecord(record.id)}
                               className={`p-2 rounded-lg transition-all ${
                                 index === 0 
-                                  ? 'text-white hover:bg-sky-400' 
+                                  ? 'text-white hover:bg-red-400' 
                                   : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
                               }`}
                               title="Eliminar registro"
@@ -733,7 +820,7 @@ const PressDetail = () => {
                           <div className="p-4 sm:p-5">
                             {/* User Info */}
                             <div className="mb-4 sm:mb-5 pb-3 sm:pb-4 border-b-2 border-gray-100 flex items-center space-x-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-red-600">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                               </svg>
                               <div>
@@ -747,12 +834,19 @@ const PressDetail = () => {
                               <table className="min-w-full">
                                 <tbody className="divide-y divide-gray-100">
                                   {(() => {
-                                    const fieldOrder = [
+                                    const fieldOrder = isLaser ? [
                                       'fechaAjuste',
-                                      'mikomi',
-                                      'mikomiPorcentaje',
+                                      'puntoCambio',
+                                      'porcentajeObtenido',
+                                      'pruebaEnsamble',
+                                      'numeroParte',
+                                      'comentarios'
+                                    ] : [
+                                      'fechaAjuste',
                                       'atari',
                                       'atariPorcentaje',
+                                      'mikomi',
+                                      'mikomiPorcentaje',
                                       'ajustesExtras',
                                       'ajustesExtrasPorcentaje',
                                       'porcentajeObtenido',
@@ -776,7 +870,7 @@ const PressDetail = () => {
                                     if (key === 'fechaRegistro') return null;
                                     
                                     const isEstado = key === 'estado';
-                                    const isCheckField = key === 'mikomi' || key === 'atari' || key === 'ajustesExtras';
+                                    const isCheckField = key === 'mikomi' || key === 'atari' || key === 'ajustesExtras' || key === 'pruebaEnsamble';
                                     
                                     return (
                                       <tr key={key} className="hover:bg-gray-50 transition-colors">
@@ -810,7 +904,7 @@ const PressDetail = () => {
                             {record.data.fotos && record.data.fotos.length > 0 && (
                               <div className="mt-5 pt-4 border-t-2 border-gray-200">
                                 <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2 text-sky-600">
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2 text-red-600">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
                                   </svg>
@@ -875,7 +969,7 @@ const PressDetail = () => {
                 {/* Progreso de Validación */}
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm sm:text-base font-medium text-sky-700">Progreso de Validación</span>
+                    <span className="text-sm sm:text-base font-medium text-red-700">Progreso de Validación</span>
                     <span className={`text-xs sm:text-sm font-bold ${
                       progress === 100 ? 'text-green-600' :
                       progress > 0 ? 'text-orange-600' : 'text-gray-400'
@@ -903,12 +997,12 @@ const PressDetail = () => {
                     <span className="text-gray-900 text-right ml-2">{assembly.fechaInicio}</span>
                   </li>
                   <li className="py-2.5 sm:py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs sm:text-sm">
-                    <span className="font-medium text-sky-600 mb-1 sm:mb-0">Fecha de Préstamo:</span>
+                    <span className="font-medium text-red-600 mb-1 sm:mb-0">Fecha Límite:</span>
                     <input
                       type="date"
-                      value={assembly.fechaPrestamo || ''}
-                      onChange={(e) => handleAssemblyFieldChange('fechaPrestamo', e.target.value)}
-                      className="px-2 py-1 border border-sky-300 rounded focus:ring-sky-500 focus:border-sky-500 text-right"
+                      value={assembly.fechaDeadline || ''}
+                      onChange={(e) => handleAssemblyFieldChange('fechaDeadline', e.target.value)}
+                      className="px-2 py-1 border border-red-300 rounded focus:ring-red-500 focus:border-red-500 text-right"
                     />
                   </li>
                   <li className="py-2.5 sm:py-3 flex justify-between text-xs sm:text-sm">
@@ -931,4 +1025,4 @@ const PressDetail = () => {
   );
 };
 
-export default PressDetail;
+export default HotPressDetail;

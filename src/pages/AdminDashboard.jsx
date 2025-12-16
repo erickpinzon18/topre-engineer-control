@@ -742,7 +742,11 @@ const AdminDashboard = () => {
                                   <span className="text-xs text-gray-400 italic">Sin datos</span>
                                 )}
                                 <button
-                                  onClick={() => navigate(assembly.area === 'press' ? `/admin/press/${assembly.id}` : `/admin/assembly/${assembly.id}`)}
+                                  onClick={() => navigate(
+                                    assembly.area === 'press' ? `/admin/press/${assembly.id}` : 
+                                    assembly.area === 'hot-press' ? `/admin/hot-press/${assembly.id}` : 
+                                    `/admin/assembly/${assembly.id}`
+                                  )}
                                   className="inline-flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs transition-all shadow-md"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1">
@@ -1000,7 +1004,11 @@ const AdminDashboard = () => {
                                   <span className="text-xs text-gray-400 italic">Sin datos</span>
                                 )}
                                 <button
-                                  onClick={() => navigate(assembly.area === 'press' ? `/admin/press/${assembly.id}` : `/admin/assembly/${assembly.id}`)}
+                                  onClick={() => navigate(
+                                    assembly.area === 'press' ? `/admin/press/${assembly.id}` : 
+                                    assembly.area === 'hot-press' ? `/admin/hot-press/${assembly.id}` : 
+                                    `/admin/assembly/${assembly.id}`
+                                  )}
                                   className="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-xs transition-all shadow-md"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
