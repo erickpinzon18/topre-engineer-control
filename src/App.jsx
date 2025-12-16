@@ -11,6 +11,8 @@ import PressView from './pages/PressView';
 import HotPressDashboard from './pages/HotPressDashboard';
 import HotPressDetail from './pages/HotPressDetail';
 import HotPressView from './pages/HotPressView';
+import WeeklyMeetings from './pages/WeeklyMeetings';
+import WeeklyMeetingDetail from './pages/WeeklyMeetingDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -109,6 +111,24 @@ function App() {
             element={
               <ProtectedRoute requireAdmin={true}>
                 <HotPressView />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* ========== REUNIONES SEMANALES (todos los usuarios) ========== */}
+          <Route 
+            path="/meetings" 
+            element={
+              <ProtectedRoute>
+                <WeeklyMeetings />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/meetings/:weekId" 
+            element={
+              <ProtectedRoute>
+                <WeeklyMeetingDetail />
               </ProtectedRoute>
             } 
           />
