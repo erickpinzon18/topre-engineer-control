@@ -48,6 +48,7 @@ const HotPressDetail = () => {
       // QC - same as Press
       return {
         fechaAjuste: toLocalDateTimeString(new Date()),
+        emisionPuntoCambio: '',
         mikomi: '',
         mikomiPorcentaje: '',
         atari: '',
@@ -407,17 +408,34 @@ const HotPressDetail = () => {
                     </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha de Ajuste
-                    </label>
-                    <input
-                      type="datetime-local"
-                      name="fechaAjuste"
-                      value={formData.fechaAjuste || ''}
-                      onChange={handleChange}
-                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de Ajuste
+                      </label>
+                      <input
+                        type="datetime-local"
+                        name="fechaAjuste"
+                        value={formData.fechaAjuste || ''}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                      />
+                    </div>
+                    {!isLaser && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Emisión Punto de Cambio
+                        </label>
+                        <input
+                          type="text"
+                          name="emisionPuntoCambio"
+                          value={formData.emisionPuntoCambio || ''}
+                          onChange={handleChange}
+                          placeholder="Folio del punto de cambio"
+                          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* QC Checklist de Validación */}
@@ -742,6 +760,7 @@ const HotPressDetail = () => {
                         numeroParte: 'Número de Parte'
                       } : {
                         fechaAjuste: 'Fecha de Ajuste',
+                        emisionPuntoCambio: 'Punto de Cambio',
                         mikomi: 'MIKOMI',
                         mikomiPorcentaje: 'Porcentaje MIKOMI',
                         atari: 'ATARI',

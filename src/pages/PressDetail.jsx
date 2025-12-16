@@ -51,6 +51,7 @@ const PressDetail = () => {
       // Inicializar formulario vacío siempre
       setFormData({
         fechaAjuste: toLocalDateTimeString(new Date()),
+        emisionPuntoCambio: '',
         mikomi: '',
         mikomiPorcentaje: '',
         atari: '',
@@ -224,6 +225,7 @@ const PressDetail = () => {
       // Limpiar el formulario
       setFormData({
         fechaAjuste: toLocalDateTimeString(new Date()),
+        emisionPuntoCambio: '',
         mikomi: '',
         mikomiPorcentaje: '',
         atari: '',
@@ -407,17 +409,32 @@ const PressDetail = () => {
                     </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha de Ajuste
-                    </label>
-                    <input
-                      type="datetime-local"
-                      name="fechaAjuste"
-                      value={formData.fechaAjuste || ''}
-                      onChange={handleChange}
-                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de Ajuste
+                      </label>
+                      <input
+                        type="datetime-local"
+                        name="fechaAjuste"
+                        value={formData.fechaAjuste || ''}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Emisión Punto de Cambio
+                      </label>
+                      <input
+                        type="text"
+                        name="emisionPuntoCambio"
+                        value={formData.emisionPuntoCambio || ''}
+                        onChange={handleChange}
+                        placeholder="Folio del punto de cambio"
+                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
+                      />
+                    </div>
                   </div>
 
                   {/* Checklist de Validación */}
@@ -655,6 +672,7 @@ const PressDetail = () => {
                     {history.map((record, index) => {
                       const fieldLabels = {
                         fechaAjuste: 'Fecha de Ajuste',
+                        emisionPuntoCambio: 'Punto de Cambio',
                         mikomi: 'MIKOMI',
                         mikomiPorcentaje: 'Porcentaje MIKOMI',
                         atari: 'ATARI',

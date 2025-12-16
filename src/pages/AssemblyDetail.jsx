@@ -223,12 +223,12 @@ const AssemblyDetail = () => {
       }
 
       // Calcular porcentaje y estado automáticamente para TEACH
-      // basándose en los 6 campos de validación
+      // basándose en los 5 campos de validación (excluyendo modificacionBloquesJig)
       const calcularPorcentajeTEACH = () => {
         const campos = [
           { campo: 'trayectoriaPuntasLimite', valorOK: 'OK' },
           { campo: 'trayectoriaPuntasNuevas', valorOK: 'OK' },
-          { campo: 'modificacionBloquesJig', valorOK: 'SI' },
+          // modificacionBloquesJig se excluye del cálculo de progreso
           { campo: 'juicioPuntosSoldadura', valorOK: 'OK' },
           { campo: 'condicionSoldadura', valorOK: 'OK' },
           { campo: 'liberacionJig', valorOK: 'SI' }
@@ -255,11 +255,11 @@ const AssemblyDetail = () => {
 
         if (total === 0) return { porcentaje: 0, estado: 'Pendiente' };
 
-        const porcentaje = Math.round((cumplidos / 6) * 100);
+        const porcentaje = Math.round((cumplidos / 5) * 100);
         
-        // OK si cumple 5 o 6 de 6 (puede faltar máximo 1)
+        // OK si cumple 4 o 5 de 5 (puede faltar máximo 1)
         // Pendiente si faltan 2 o más
-        const estado = cumplidos >= 5 ? 'OK' : 'Pendiente';
+        const estado = cumplidos >= 4 ? 'OK' : 'Pendiente';
 
         return { porcentaje, estado };
       };

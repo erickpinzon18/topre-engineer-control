@@ -258,8 +258,8 @@ const AdminDashboard = () => {
             const meta = assembly.meta || 97;
             return (assembly.progress || 0) >= meta;
           } else if (assembly.tipo === 'TEACH') {
-            // Calcular desde campos de validación (simplificado: usamos progress >= 83 que es 5/6)
-            return (assembly.progress || 0) >= 83;
+            // Calcular desde campos de validación (usamos progress >= 80 que es 4/5, excluyendo modificacionBloquesJig)
+            return (assembly.progress || 0) >= 80;
           }
           return false;
         };
