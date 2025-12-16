@@ -76,7 +76,7 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
                   {/* Modal Header */}
                   <div className="flex justify-between items-center p-5 border-b border-gray-200">
                     <Dialog.Title className="text-xl font-semibold text-gray-900">
-                      REGISTRAR AJUSTE EN TROQUEL
+                      REGISTRAR NUEVO ENSAMBLE
                     </Dialog.Title>
                     <button
                       type="button"
