@@ -11,34 +11,49 @@ const WeeklyMeetings = () => {
   const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Calcular el ID de la semana actual (formato: 2024-W51)
+  // Calcular el ID de la semana actual usando ISO 8601
   const getCurrentWeekId = () => {
     const now = new Date();
     const year = now.getFullYear();
-    const startOfYear = new Date(year, 0, 1);
-    const days = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
-    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-    return `${year}-W${String(weekNumber).padStart(2, '0')}`;
+    
+    // Obtener el jueves de esta semana (ISO 8601 usa el jueves para determinar la semana)
+    const thursday = new Date(now);
+    thursday.setDate(now.getDate() - ((now.getDay() + 6) % 7) + 3);
+    
+    // Obtener el año del jueves (puede ser diferente al año actual en semanas de transición)
+    const thursdayYear = thursday.getFullYear();
+    
+    // Primer jueves del año
+    const firstThursday = new Date(thursdayYear, 0, 4);
+    firstThursday.setDate(4 - ((firstThursday.getDay() + 6) % 7) + 3);
+    
+    // Calcular número de semana
+    const weekNumber = Math.floor((thursday - firstThursday) / (7 * 24 * 60 * 60 * 1000)) + 1;
+    
+    return `${thursdayYear}-W${String(weekNumber).padStart(2, '0')}`;
   };
 
-  // Obtener fecha de inicio de una semana dado su ID
+  // Obtener fecha de inicio (lunes) y fin (domingo) de una semana dado su ID
   const getWeekDates = (weekId) => {
     const [year, week] = weekId.split('-W');
     const yearNum = parseInt(year);
     const weekNum = parseInt(week);
     
-    // Primer día del año
-    const firstDayOfYear = new Date(yearNum, 0, 1);
-    // Encontrar el primer lunes del año
-    const daysToMonday = (8 - firstDayOfYear.getDay()) % 7;
-    const firstMonday = new Date(yearNum, 0, 1 + daysToMonday);
+    // Encontrar el 4 de enero (siempre está en semana 1 según ISO 8601)
+    const jan4 = new Date(yearNum, 0, 4);
     
-    // Calcular inicio de la semana solicitada
-    const startDate = new Date(firstMonday);
-    startDate.setDate(startDate.getDate() + (weekNum - 1) * 7);
+    // Encontrar el lunes de la semana 1
+    const dayOfWeek = jan4.getDay() || 7; // Domingo = 7
+    const mondayWeek1 = new Date(jan4);
+    mondayWeek1.setDate(jan4.getDate() - dayOfWeek + 1);
     
+    // Calcular el lunes de la semana solicitada
+    const startDate = new Date(mondayWeek1);
+    startDate.setDate(mondayWeek1.getDate() + (weekNum - 1) * 7);
+    
+    // El domingo de esa semana
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 6);
+    endDate.setDate(startDate.getDate() + 6);
     
     return { startDate, endDate };
   };

@@ -166,17 +166,28 @@ const WeeklyMeetingDetail = () => {
     'cancelado': 'bg-red-200'
   };
 
+  // Obtener fecha de inicio (lunes) y fin (domingo) de una semana dado su ID (ISO 8601)
   const getWeekDates = (weekId) => {
     const [year, week] = weekId.split('-W');
     const yearNum = parseInt(year);
     const weekNum = parseInt(week);
-    const firstDayOfYear = new Date(yearNum, 0, 1);
-    const daysToMonday = (8 - firstDayOfYear.getDay()) % 7;
-    const firstMonday = new Date(yearNum, 0, 1 + daysToMonday);
-    const startDate = new Date(firstMonday);
-    startDate.setDate(startDate.getDate() + (weekNum - 1) * 7);
+    
+    // Encontrar el 4 de enero (siempre está en semana 1 según ISO 8601)
+    const jan4 = new Date(yearNum, 0, 4);
+    
+    // Encontrar el lunes de la semana 1
+    const dayOfWeek = jan4.getDay() || 7; // Domingo = 7
+    const mondayWeek1 = new Date(jan4);
+    mondayWeek1.setDate(jan4.getDate() - dayOfWeek + 1);
+    
+    // Calcular el lunes de la semana solicitada
+    const startDate = new Date(mondayWeek1);
+    startDate.setDate(mondayWeek1.getDate() + (weekNum - 1) * 7);
+    
+    // El domingo de esa semana
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 6);
+    endDate.setDate(startDate.getDate() + 6);
+    
     return { startDate, endDate };
   };
 
