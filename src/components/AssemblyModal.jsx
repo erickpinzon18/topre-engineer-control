@@ -144,17 +144,33 @@ const AssemblyModal = ({ isOpen, onClose, onSubmit, userName }) => {
 
                     {/* Row 3: Tipo */}
                     <div>
-                      <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
-                        Tipo
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Ajuste
                       </label>
-                      <input
-                        type="text"
-                        name="tipo"
-                        id="tipo"
-                        value="QC"
-                        disabled
-                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500"
-                      />
+                      <div className="flex space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, tipo: 'QC' }))}
+                          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                            formData.tipo === 'QC'
+                              ? 'bg-sky-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          QC
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, tipo: 'TEACH' }))}
+                          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+                            formData.tipo === 'TEACH'
+                              ? 'bg-green-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          TEACH
+                        </button>
+                      </div>
                     </div>
 
                     {/* Row 4: Fechas */}
