@@ -197,6 +197,17 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
 
   // Generar sección TEACH
   const generateTEACHSection = (teachAssemblies) => {
+    // Separar ensambles con y sin GORIKA (tiempos)
+    const teachWithGorika = teachAssemblies.filter(a => {
+      const lr = a.lastRecord || {};
+      return lr.tiempoEstablecidoJig1 || lr.tiempoObtenidoJig1 || lr.tiempoEstablecidoJig2 || lr.tiempoObtenidoJig2;
+    });
+    
+    const teachWithoutGorika = teachAssemblies.filter(a => {
+      const lr = a.lastRecord || {};
+      return !lr.tiempoEstablecidoJig1 && !lr.tiempoObtenidoJig1 && !lr.tiempoEstablecidoJig2 && !lr.tiempoObtenidoJig2;
+    });
+
     const getEstadoColor = (estado) => {
       if (estado === 'OK') return '#16a34a';
       if (estado === 'NG') return '#dc2626';
@@ -207,52 +218,110 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
       if (!lastRecord) return '-';
       if (lastRecord.resultadoDestructivaJig1 === 'OK' || lastRecord.resultadoDestructivaJig2 === 'OK') return 'OK';
       if (lastRecord.resultadoDestructivaJig1 === 'NG' || lastRecord.resultadoDestructivaJig2 === 'NG') return 'NG';
+      
+      const camposOK = [lastRecord.trayectoriaPuntasLimite === 'OK', lastRecord.trayectoriaPuntasNuevas === 'OK', lastRecord.juicioPuntosSoldadura === 'OK', lastRecord.condicionSoldadura === 'OK'];
+      const camposNG = [lastRecord.trayectoriaPuntasLimite === 'NG', lastRecord.trayectoriaPuntasNuevas === 'NG', lastRecord.juicioPuntosSoldadura === 'NG', lastRecord.condicionSoldadura === 'NG'];
+      
+      if (camposNG.some(v => v)) return 'NG';
+      if (camposOK.some(v => v)) return 'OK';
       return '-';
     };
 
-    return `
-      <div style="margin-bottom: 20px;">
-        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; padding: 12px 16px; font-weight: bold; font-size: 15px; border-left: 5px solid #22c55e; margin-bottom: 15px; border-radius: 6px;">
-          <span style="font-size: 18px; margin-right: 6px;">🎓</span>
-          <span>TEACH - Robot Teaching</span>
-          <span style="color: #363838ff; font-size: 12px; margin-left: 8px; font-weight: 500;">${teachAssemblies.length} ensambles</span>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #e5e7eb;">
-          <thead>
-            <tr style="background: #f0fdf4;">
-              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
-              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 18%;">Máquina</th>
-              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Modelo</th>
-              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
-              <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 12%;">Estado</th>
-              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Inicio</th>
-              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Deadline</th>
-              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Progreso</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${teachAssemblies.map((assembly, idx) => {
-              const lr = assembly.lastRecord || {};
-              const estadoGeneral = getEstadoGeneral(lr);
-              const progress = assembly.progress || 0;
+    let html = '';
 
-              return `
-                <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f0fdf4'};">
-                  <td style="padding: 6px; border: 1px solid #e5e7eb; color: #16a34a; font-weight: 700;">TEACH</td>
-                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-weight: 600;">${assembly.maquina}</td>
-                  <td style="padding: 6px; border: 1px solid #e5e7eb;">${assembly.modelo}</td>
-                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-family: monospace;">#${assembly.numero}</td>
-                  <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; color: ${getEstadoColor(estadoGeneral)}; font-weight: 700;">${estadoGeneral}</td>
-                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px;">${assembly.fechaInicio || 'N/A'}</td>
-                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px; color: #dc2626; font-weight: 600;">${assembly.fechaDeadline || 'N/A'}</td>
-                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px; color: ${progress >= 100 ? '#16a34a' : '#6b7280'}; font-weight: 600;">${progress}%</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
+    // TABLA CON GORIKA (tiempos)
+    if (teachWithGorika.length > 0) {
+      html += `
+        <div style="margin-bottom: 20px;">
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; padding: 12px 16px; font-weight: bold; font-size: 15px; border-left: 5px solid #f59e0b; margin-bottom: 15px; border-radius: 6px;">
+            <span style="font-size: 18px; margin-right: 6px;">⏱️</span>
+            <span>TEACH - GORIKA (Tiempos)</span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 8px; font-weight: 500;">${teachWithGorika.length} ensambles</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #e5e7eb;">
+            <thead>
+              <tr style="background: #fef9c3;">
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Máquina</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Modelo</th>
+                <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 10%;">T. Antes J1</th>
+                <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 10%;">T. Después J1</th>
+                <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 8%;">Estado J1</th>
+                <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 10%;">T. Antes J2</th>
+                <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 10%;">T. Después J2</th>
+                <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 8%;">Estado J2</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Fechas</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${teachWithGorika.map((assembly, idx) => {
+                const lr = assembly.lastRecord || {};
+                const formatT = (t) => t ? t + ' seg' : '-';
+                const estadoJ1 = lr.resultadoDestructivaJig1 || '-';
+                const estadoJ2 = lr.resultadoDestructivaJig2 || '-';
+                
+                return `
+                  <tr style="background: ${idx % 2 === 0 ? '#fffbeb' : '#fef3c7'};">
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; font-weight: 600;">${assembly.maquina}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb;">${assembly.modelo}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${formatT(lr.tiempoEstablecidoJig1)}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${formatT(lr.tiempoObtenidoJig1)}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; color: ${getEstadoColor(estadoJ1)}; font-weight: 700;">${estadoJ1}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${formatT(lr.tiempoEstablecidoJig2)}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${formatT(lr.tiempoObtenidoJig2)}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; color: ${getEstadoColor(estadoJ2)}; font-weight: 700;">${estadoJ2}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px;">📅 ${assembly.fechaInicio || 'N/A'} | ⏰ ${assembly.fechaDeadline || 'N/A'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // TABLA SIN GORIKA (solo estado)
+    if (teachWithoutGorika.length > 0) {
+      html += `
+        <div style="margin-bottom: 20px;">
+          <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; padding: 12px 16px; font-weight: bold; font-size: 15px; border-left: 5px solid #22c55e; margin-bottom: 15px; border-radius: 6px;">
+            <span style="font-size: 18px; margin-right: 6px;">🎓</span>
+            <span>TEACH</span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 8px; font-weight: 500;">${teachWithoutGorika.length} ensambles</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #e5e7eb;">
+            <thead>
+              <tr style="background: #f0fdf4;">
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Máquina</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 15%;">Modelo</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 15%;">Número</th>
+                <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 15%;">Estado</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 15%;">Inicio</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Deadline</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${teachWithoutGorika.map((assembly, idx) => {
+                const lr = assembly.lastRecord || {};
+                const estadoGeneral = getEstadoGeneral(lr);
+
+                return `
+                  <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f0fdf4'};">
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; font-weight: 600;">${assembly.maquina}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb;">${assembly.modelo}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; font-family: monospace;">#${assembly.numero}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; color: ${getEstadoColor(estadoGeneral)}; font-weight: 700;">${estadoGeneral}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px;">${assembly.fechaInicio || 'N/A'}</td>
+                    <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px; color: #dc2626; font-weight: 600;">${assembly.fechaDeadline || 'N/A'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    return html;
   };
 
   const generateHTMLSections = (data) => {
