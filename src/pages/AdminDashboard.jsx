@@ -110,7 +110,7 @@ const AdminDashboard = () => {
                 avgPercent: avgPercent.toFixed(2),
                 improvement: improvement.toFixed(2),
                 improvementPositive: improvement > 0,
-                hasReachedGoal: lastPercent >= 97,
+                hasReachedGoal: lastPercent >= parseFloat(assemblyData.porcentajeMeta || '97'),
                 percentHistory: percentages
               };
             }
@@ -255,7 +255,7 @@ const AdminDashboard = () => {
         // Función para determinar si un ensamble tiene calidad OK
         const isAssemblyOK = (assembly) => {
           if (assembly.tipo === 'QC') {
-            const meta = assembly.meta || 97;
+            const meta = parseFloat(assembly.porcentajeMeta || '97');
             return (assembly.progress || 0) >= meta;
           } else if (assembly.tipo === 'TEACH') {
             // Calcular desde campos de validación (usamos progress >= 80 que es 4/5, excluyendo modificacionBloquesJig)
@@ -601,16 +601,16 @@ const AdminDashboard = () => {
                       Detalle de Ensambles ({engineer.activeAssemblies.length + engineer.completedAssemblies.length})
                     </h4>
                   </div>
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200" style={{ tableLayout: 'fixed' }}>
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Ensamble</th>
-                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Tipo</th>
-                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Progreso</th>
-                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Calidad</th>
+                        <th style={{ width: '22%' }} className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Ensamble</th>
+                        <th style={{ width: '10%' }} className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Tipo</th>
+                        <th style={{ width: '15%' }} className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Progreso</th>
+                        <th style={{ width: '10%' }} className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Calidad</th>
                         {/* <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th> */}
-                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fechas</th>
-                        <th className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estadísticas</th>
+                        <th style={{ width: '18%' }} className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fechas</th>
+                        <th style={{ width: '25%' }} className="px-3 sm:px-5 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estadísticas</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -662,7 +662,7 @@ const AdminDashboard = () => {
                                 let isOK = false;
                                 
                                 if (assembly.tipo === 'QC') {
-                                  const meta = assembly.meta || 97;
+                                  const meta = parseFloat(assembly.porcentajeMeta || '97');
                                   isOK = (assembly.progress || 0) >= meta;
                                 } else if (assembly.tipo === 'TEACH') {
                                   // Buscar el último historial para calcular
@@ -773,7 +773,7 @@ const AdminDashboard = () => {
                                       Estadísticas QC - {assembly.stats.totalRecords} Registros
                                     </h5>
                                     
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-4 gap-3" style={{ width: '100%' }}>
                                       {/* Mejora Total */}
                                       <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-gray-200">
                                         <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Mejora Total</p>
@@ -810,7 +810,7 @@ const AdminDashboard = () => {
                                         <p className={`text-xs font-semibold uppercase mb-1 ${
                                           assembly.stats.hasReachedGoal ? 'text-green-600' : 'text-yellow-600'
                                         }`}>
-                                          Meta (≥97%)
+                                          Meta (≥{assembly.porcentajeMeta || '97'}%)
                                         </p>
                                         <p className={`text-2xl font-bold ${
                                           assembly.stats.hasReachedGoal ? 'text-green-700' : 'text-yellow-700'
@@ -972,20 +972,12 @@ const AdminDashboard = () => {
                                 OK
                               </span>
                             </td>
-                            <td className="px-5 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border-2 border-green-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                                </svg>
-                                Completado
-                              </span>
-                            </td>
-                            <td className="px-5 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-600">
+                            <td className="px-3 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
+                              <div className="text-xs sm:text-sm font-semibold text-gray-700">
                                 {assembly.fechaDeadline}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                Finalizado ✓
+                              <div className="text-xs text-green-600 font-medium mt-1">
+                                ✓ Finalizado
                               </div>
                             </td>
                             <td className="px-5 py-4 whitespace-nowrap">
@@ -1034,7 +1026,7 @@ const AdminDashboard = () => {
                                       Estadísticas QC - {assembly.stats.totalRecords} Registros
                                     </h5>
                                     
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-4 gap-3" style={{ width: '100%' }}>
                                       {/* Mejora Total */}
                                       <div className="bg-white rounded-lg p-4 shadow-sm border-2 border-gray-200">
                                         <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Mejora Total</p>
@@ -1071,7 +1063,7 @@ const AdminDashboard = () => {
                                         <p className={`text-xs font-semibold uppercase mb-1 ${
                                           assembly.stats.hasReachedGoal ? 'text-green-600' : 'text-yellow-600'
                                         }`}>
-                                          Meta (≥97%)
+                                          Meta (≥{assembly.porcentajeMeta || '97'}%)
                                         </p>
                                         <p className={`text-2xl font-bold ${
                                           assembly.stats.hasReachedGoal ? 'text-green-700' : 'text-yellow-700'
