@@ -39,79 +39,90 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
         selectedAssemblies.includes(a.id)
       );
 
-      // Crear un contenedor temporal
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.width = '1000px';
-      container.style.padding = '30px';
-      container.style.backgroundColor = '#ffffff';
-      
-      container.innerHTML = `
-        <div style="font-family: Arial, sans-serif; color: #333; background: #ffffff; max-width: 100%;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%); padding: 25px 20px; text-align: center; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <div style="background: rgba(255,255,255,0.95); display: inline-block; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px;">
-              <span style="font-size: 24px;">📊</span>
-            </div>
-            <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 28px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Reporte de Ensambles</h1>
-            <div style="background: rgba(255,255,255,0.15); display: inline-block; padding: 6px 16px; border-radius: 20px; margin-bottom: 8px;">
-              <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 600;">Control de Ingeniería</p>
-            </div>
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.3);">
-              <p style="color: #e0f2fe; margin: 4px 0; font-size: 12px;">📅 ${new Date().toLocaleDateString('es-MX', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}</p>
-              <p style="color: #e0f2fe; margin: 4px 0; font-size: 12px;">👤 Generado por: <strong>${userProfile?.name || currentUser?.email || 'Usuario'}</strong></p>
-            </div>
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 10;
+      let currentY = margin;
+
+      // Función auxiliar para renderizar una sección y agregarla al PDF
+      const addSectionToPDF = async (sectionHtml, isFirst = false) => {
+        const container = document.createElement('div');
+        container.innerHTML = `<div style="font-family: Arial, sans-serif; padding: 15px; background: white; max-width: 100%;">${sectionHtml}</div>`;
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.width = '1000px';
+        document.body.appendChild(container);
+
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        document.body.removeChild(container);
+
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Si no cabe en la página actual, agregar nueva página
+        if (!isFirst && currentY + imgHeight > pageHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, currentY, imgWidth, imgHeight);
+        currentY += imgHeight + 3;
+      };
+
+      // HEADER
+      const headerHtml = `
+        <div style="background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%); padding: 25px 20px; text-align: center; border-radius: 8px; margin-bottom: 15px;">
+          <div style="background: rgba(255,255,255,0.95); display: inline-block; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px;">
+            <span style="font-size: 24px;">📊</span>
           </div>
-          
-          <!-- Content -->
-          <div style="padding: 0 10px;">
-            ${generateHTMLSections(selectedData)}
+          <h1 style="color: #ffffff; margin: 0 0 8px 0; font-size: 28px; font-weight: bold;">Reporte de Ensambles</h1>
+          <div style="background: rgba(255,255,255,0.15); display: inline-block; padding: 6px 16px; border-radius: 20px; margin-bottom: 8px;">
+            <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 600;">Control de Ingeniería</p>
           </div>
-          
-          <!-- Footer -->
-          <div style="margin-top: 30px; padding: 16px; background: #f8fafc; border-top: 3px solid #0284c7; text-align: center; border-radius: 8px;">
-            <p style="margin: 0 0 6px 0; color: #64748b; font-size: 10px; font-weight: 600;">© 2025. Todos los derechos reservados.</p>
-            <p style="margin: 0; color: #94a3b8; font-size: 9px;">Sistema de Control de Ingeniería v1.0 - ByUphy.mx</p>
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.3);">
+            <p style="color: #e0f2fe; margin: 4px 0; font-size: 12px;">📅 ${new Date().toLocaleDateString('es-MX', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</p>
+            <p style="color: #e0f2fe; margin: 4px 0; font-size: 12px;">👤 Generado por: <strong>${userProfile?.name || currentUser?.email || 'Usuario'}</strong></p>
           </div>
         </div>
       `;
+      await addSectionToPDF(headerHtml, true);
 
-      document.body.appendChild(container);
+      // Separar por tipo
+      const qcAssemblies = selectedData.filter(a => a.tipo === 'QC');
+      const teachAssemblies = selectedData.filter(a => a.tipo === 'TEACH');
 
-      // Generar canvas del contenido
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-
-      document.body.removeChild(container);
-
-      // Crear PDF
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= 297;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
+      // QC SECTION
+      if (qcAssemblies.length > 0) {
+        const qcHtml = generateQCSection(qcAssemblies);
+        await addSectionToPDF(qcHtml);
       }
+
+      // TEACH SECTIONS
+      if (teachAssemblies.length > 0) {
+        const teachHtml = generateTEACHSection(teachAssemblies);
+        await addSectionToPDF(teachHtml);
+      }
+
+      // FOOTER
+      const footerHtml = `
+        <div style="padding: 16px; background: #f8fafc; border-top: 3px solid #0284c7; text-align: center; border-radius: 8px;">
+          <p style="margin: 0 0 6px 0; color: #64748b; font-size: 10px; font-weight: 600;">© 2025. Todos los derechos reservados.</p>
+          <p style="margin: 0; color: #94a3b8; font-size: 9px;">Sistema de Control de Ingeniería v1.0 - By Uphy.mx</p>
+        </div>
+      `;
+      await addSectionToPDF(footerHtml);
 
       const fileName = `Reporte_Ensambles_${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`;
       pdf.save(fileName);
@@ -126,6 +137,124 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
     }
   };
 
+  // Generar sección QC
+  const generateQCSection = (qcAssemblies) => {
+    return `
+      <div style="margin-bottom: 20px;">
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e3a8a; padding: 12px 16px; font-weight: bold; font-size: 15px; border-left: 5px solid #2563eb; margin-bottom: 15px; border-radius: 6px;">
+          <span style="font-size: 18px; margin-right: 6px;">🛡️</span>
+          <span>QC - Level Up</span>
+          <span style="color: #363838ff; font-size: 12px; margin-left: 8px; font-weight: 500;">${qcAssemblies.length} ensambles</span>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #e5e7eb;">
+          <thead>
+            <tr style="background: #f3f4f6;">
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Máquina</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Modelo</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Número</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">% Actual</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Estado</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Comentarios</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 9%;">Inicio</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 9%;">Deadline</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qcAssemblies.map((assembly, idx) => {
+              const lastRecord = assembly.lastRecord || {};
+              const meta = parseFloat(assembly.porcentajeMeta || '97');
+              const porcentaje = lastRecord.porcentajeObtenido || 0;
+              const estado = lastRecord.estado || 'Pendiente';
+              
+              let porcentajeColor = '#ef4444';
+              if (porcentaje >= meta) porcentajeColor = '#10b981';
+              else if (porcentaje >= meta * 0.93) porcentajeColor = '#3b82f6';
+
+              let estadoColor = '#4b5563';
+              if (estado === 'OK') estadoColor = '#16a34a';
+              else if (estado === 'NG') estadoColor = '#dc2626';
+
+              return `
+                <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; color: #2563eb; font-weight: 700;">QC</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-weight: 600;">${assembly.maquina}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb;">${assembly.modelo}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-family: monospace;">#${assembly.numero}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; color: ${porcentajeColor}; font-weight: 700;">${porcentaje}%</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; color: ${estadoColor}; font-weight: 700;">${estado}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px; color: #6b7280;">${lastRecord.comentarios || '-'}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px;">${assembly.fechaInicio || 'N/A'}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px; color: #dc2626; font-weight: 600;">${assembly.fechaDeadline || 'N/A'}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  // Generar sección TEACH
+  const generateTEACHSection = (teachAssemblies) => {
+    const getEstadoColor = (estado) => {
+      if (estado === 'OK') return '#16a34a';
+      if (estado === 'NG') return '#dc2626';
+      return '#6b7280';
+    };
+
+    const getEstadoGeneral = (lastRecord) => {
+      if (!lastRecord) return '-';
+      if (lastRecord.resultadoDestructivaJig1 === 'OK' || lastRecord.resultadoDestructivaJig2 === 'OK') return 'OK';
+      if (lastRecord.resultadoDestructivaJig1 === 'NG' || lastRecord.resultadoDestructivaJig2 === 'NG') return 'NG';
+      return '-';
+    };
+
+    return `
+      <div style="margin-bottom: 20px;">
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; padding: 12px 16px; font-weight: bold; font-size: 15px; border-left: 5px solid #22c55e; margin-bottom: 15px; border-radius: 6px;">
+          <span style="font-size: 18px; margin-right: 6px;">🎓</span>
+          <span>TEACH - Robot Teaching</span>
+          <span style="color: #363838ff; font-size: 12px; margin-left: 8px; font-weight: 500;">${teachAssemblies.length} ensambles</span>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #e5e7eb;">
+          <thead>
+            <tr style="background: #f0fdf4;">
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 18%;">Máquina</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Modelo</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
+              <th style="padding: 8px; text-align: center; border: 1px solid #e5e7eb; width: 12%;">Estado</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Inicio</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Deadline</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Progreso</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${teachAssemblies.map((assembly, idx) => {
+              const lr = assembly.lastRecord || {};
+              const estadoGeneral = getEstadoGeneral(lr);
+              const progress = assembly.progress || 0;
+
+              return `
+                <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f0fdf4'};">
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; color: #16a34a; font-weight: 700;">TEACH</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-weight: 600;">${assembly.maquina}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb;">${assembly.modelo}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-family: monospace;">#${assembly.numero}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; text-align: center; color: ${getEstadoColor(estadoGeneral)}; font-weight: 700;">${estadoGeneral}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px;">${assembly.fechaInicio || 'N/A'}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px; color: #dc2626; font-weight: 600;">${assembly.fechaDeadline || 'N/A'}</td>
+                  <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 9px; color: ${progress >= 100 ? '#16a34a' : '#6b7280'}; font-weight: 600;">${progress}%</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  };
+
   const generateHTMLSections = (data) => {
     let html = '';
     
@@ -136,7 +265,7 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
           <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e3a8a; padding: 12px 16px; font-weight: bold; font-size: 15px; border-left: 5px solid #2563eb; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
             <span style="font-size: 18px; margin-right: 6px;">🛡️</span>
             <span style="vertical-align: middle;">QC - Level Up</span>
-            <span style="background: rgba(255,255,255,0.7); color: #1e40af; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 8px;">${qcAssemblies.length} ensambles</span>
+            <span style="color: #6b7280; font-size: 12px; margin-left: 8px; font-weight: 500;">${qcAssemblies.length} ensambles</span>
           </div>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); table-layout: fixed;">
             <thead>
@@ -244,7 +373,7 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
             <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; padding: 14px 18px; font-weight: bold; font-size: 16px; border-left: 6px solid #f59e0b; margin-bottom: 18px; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
               <span style="font-size: 20px; margin-right: 8px;">⏱️</span>
               <span style="vertical-align: middle;">TEACH - GORIKA (Comparación de Tiempos)</span>
-              <span style="background: rgba(255,255,255,0.8); color: #92400e; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 10px; font-weight: 600;">${teachWithGorika.length} ensambles</span>
+              <span style="color: #6b7280; font-size: 12px; margin-left: 10px; font-weight: 500;">${teachWithGorika.length} ensambles</span>
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; border: 2px solid #fcd34d; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); table-layout: fixed;">
               <thead>
@@ -297,7 +426,7 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
             <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; padding: 14px 18px; font-weight: bold; font-size: 16px; border-left: 6px solid #10b981; margin-bottom: 18px; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
               <span style="font-size: 20px; margin-right: 8px;">🎓</span>
               <span style="vertical-align: middle;">TEACH</span>
-              <span style="background: rgba(255,255,255,0.8); color: #065f46; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 10px; font-weight: 600;">${teachWithoutGorika.length} ensambles</span>
+              <span style="color: #6b7280; font-size: 12px; margin-left: 10px; font-weight: 500;">${teachWithoutGorika.length} ensambles</span>
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; border: 2px solid #d1d5db; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); table-layout: fixed;">
               <thead>
@@ -378,7 +507,7 @@ NOTA: Este es un resumen del reporte. Para ver el reporte completo con todos los
 
 ${'='.repeat(50)}
 © 2025. Todos los derechos reservados.
-Sistema de Control de Ingeniería v1.0 - ByUphy.mx
+Sistema de Control de Ingeniería v1.0 - By Uphy.mx
     `.trim();
 
     // Usar mailto para evitar problemas con URLs largas
