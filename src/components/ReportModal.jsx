@@ -203,69 +203,134 @@ const ReportModal = ({ isOpen, onClose, assemblies }) => {
 
     const teachAssemblies = data.filter(a => a.tipo === 'TEACH');
     if (teachAssemblies.length > 0) {
-      html += `
-        <div style="margin-bottom: 25px; page-break-inside: avoid;">
-          <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; padding: 12px 16px; font-weight: bold; font-size: 15px; border-left: 5px solid #10b981; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
-            <span style="font-size: 18px; margin-right: 6px;">🎓</span>
-            <span style="vertical-align: middle;">TEACH</span>
-            <span style="background: rgba(255,255,255,0.7); color: #065f46; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 8px;">${teachAssemblies.length} ensambles</span>
+      // Separar ensambles con y sin GORIKA (tiempos)
+      const teachWithGorika = teachAssemblies.filter(a => {
+        const lr = a.lastRecord || {};
+        return lr.tiempoEstablecidoJig1 || lr.tiempoObtenidoJig1 || lr.tiempoEstablecidoJig2 || lr.tiempoObtenidoJig2;
+      });
+      
+      const teachWithoutGorika = teachAssemblies.filter(a => {
+        const lr = a.lastRecord || {};
+        return !lr.tiempoEstablecidoJig1 && !lr.tiempoObtenidoJig1 && !lr.tiempoEstablecidoJig2 && !lr.tiempoObtenidoJig2;
+      });
+
+      // Función para generar el badge de estado
+      const getEstadoBadge = (estado) => {
+        if (estado === 'OK') {
+          return '<span style="display: inline-block; padding: 5px 14px; border-radius: 12px; font-size: 11px; font-weight: 800; background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; border: 2px solid #10b981; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">OK</span>';
+        } else if (estado === 'NG') {
+          return '<span style="display: inline-block; padding: 5px 14px; border-radius: 12px; font-size: 11px; font-weight: 800; background: linear-gradient(135deg, #fee2e2, #fecaca); color: #991b1b; border: 2px solid #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">NG</span>';
+        }
+        return '<span style="color: #9ca3af; font-style: italic; font-size: 10px;">Pendiente</span>';
+      };
+
+      // Función para obtener estado general
+      const getEstadoGeneral = (lastRecord) => {
+        if (lastRecord.resultadoDestructivaJig1 === 'OK' || lastRecord.resultadoDestructivaJig2 === 'OK') return 'OK';
+        if (lastRecord.resultadoDestructivaJig1 === 'NG' || lastRecord.resultadoDestructivaJig2 === 'NG') return 'NG';
+        
+        const camposOK = [lastRecord.trayectoriaPuntasLimite === 'OK', lastRecord.trayectoriaPuntasNuevas === 'OK', lastRecord.juicioPuntosSoldadura === 'OK', lastRecord.condicionSoldadura === 'OK'];
+        const camposNG = [lastRecord.trayectoriaPuntasLimite === 'NG', lastRecord.trayectoriaPuntasNuevas === 'NG', lastRecord.juicioPuntosSoldadura === 'NG', lastRecord.condicionSoldadura === 'NG'];
+        
+        if (camposNG.some(v => v)) return 'NG';
+        if (camposOK.some(v => v)) return 'OK';
+        return '-';
+      };
+
+      // TABLA CON GORIKA (tiempos)
+      if (teachWithGorika.length > 0) {
+        html += `
+          <div style="margin-bottom: 25px; page-break-inside: avoid;">
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; padding: 14px 18px; font-weight: bold; font-size: 16px; border-left: 6px solid #f59e0b; margin-bottom: 18px; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+              <span style="font-size: 20px; margin-right: 8px;">⏱️</span>
+              <span style="vertical-align: middle;">TEACH - GORIKA (Comparación de Tiempos)</span>
+              <span style="background: rgba(255,255,255,0.8); color: #92400e; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 10px; font-weight: 600;">${teachWithGorika.length} ensambles</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; border: 2px solid #fcd34d; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); table-layout: fixed;">
+              <thead>
+                <tr style="background: linear-gradient(to bottom, #fef9c3, #fef08a);">
+                  <th style="color: #92400e; text-align: left; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 13%;">Máquina</th>
+                  <th style="color: #92400e; text-align: left; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 10%;">Modelo</th>
+                  <th style="color: #92400e; text-align: center; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 11%;">T. Antes J1</th>
+                  <th style="color: #92400e; text-align: center; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 11%;">T. Después J1</th>
+                  <th style="color: #92400e; text-align: center; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 9%;">Estado J1</th>
+                  <th style="color: #92400e; text-align: center; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 11%;">T. Antes J2</th>
+                  <th style="color: #92400e; text-align: center; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 11%;">T. Después J2</th>
+                  <th style="color: #92400e; text-align: center; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 9%;">Estado J2</th>
+                  <th style="color: #92400e; text-align: left; padding: 12px 8px; font-weight: 800; border-bottom: 3px solid #f59e0b; text-transform: uppercase; font-size: 8px; width: 15%;">Fechas</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${teachWithGorika.map((assembly, idx) => {
+                  const lr = assembly.lastRecord || {};
+                  const formatT = (t) => t ? '<span style="font-weight: 700; color: #374151;">' + t + ' seg</span>' : '<span style="color: #9ca3af;">-</span>';
+                  const estadoJ1 = lr.resultadoDestructivaJig1 || '-';
+                  const estadoJ2 = lr.resultadoDestructivaJig2 || '-';
+                  
+                  return `
+                    <tr style="background-color: ${idx % 2 === 0 ? '#fffbeb' : '#fef3c7'};">
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a;"><strong style="font-size: 11px;">${assembly.maquina}</strong></td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a; font-size: 10px;">${assembly.modelo}</td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a; text-align: center; font-size: 10px;">${formatT(lr.tiempoEstablecidoJig1)}</td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a; text-align: center; font-size: 10px;">${formatT(lr.tiempoObtenidoJig1)}</td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a; text-align: center;">${getEstadoBadge(estadoJ1)}</td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a; text-align: center; font-size: 10px;">${formatT(lr.tiempoEstablecidoJig2)}</td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a; text-align: center; font-size: 10px;">${formatT(lr.tiempoObtenidoJig2)}</td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a; text-align: center;">${getEstadoBadge(estadoJ2)}</td>
+                      <td style="padding: 10px 8px; border-bottom: 1px solid #fde68a;">
+                        <div style="font-size: 9px; color: #374151; margin-bottom: 2px;">📅 ${assembly.fechaInicio || 'N/A'}</div>
+                        <div style="font-size: 9px; color: #dc2626; font-weight: 700;">⏰ ${assembly.fechaDeadline || 'N/A'}</div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
           </div>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); table-layout: fixed;">
-            <thead>
-              <tr style="background: linear-gradient(to bottom, #f9fafb, #f3f4f6);">
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 6%;">Tipo</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 10%;">Máquina</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 9%;">Modelo</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 10%;">Número</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 11%;">Jig 1 Mejora</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 11%;">Jig 2 Mejora</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 15%;">Test Destructivo</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 14%;">Inicio</th>
-                <th style="color: #374151; text-align: left; padding: 10px 8px; font-weight: 700; border-bottom: 2px solid #d1d5db; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px; width: 14%;">Deadline</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${teachAssemblies.map(assembly => {
-                const lastRecord = assembly.lastRecord || {};
-                
-                const jig1 = lastRecord.mejoraPorcentajeJig1 
-                  ? `${parseFloat(lastRecord.mejoraPorcentajeJig1) > 0 ? '↑' : '↓'} ${lastRecord.mejoraPorcentajeJig1}%`
-                  : 'N/A';
-                
-                const jig2 = lastRecord.mejoraPorcentajeJig2 
-                  ? `${parseFloat(lastRecord.mejoraPorcentajeJig2) > 0 ? '↑' : '↓'} ${lastRecord.mejoraPorcentajeJig2}%`
-                  : 'N/A';
+        `;
+      }
 
-                const test1 = lastRecord.resultadoDestructivaJig1 
-                  ? `<span style="display: inline-block; padding: 4px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; background-color: ${lastRecord.resultadoDestructivaJig1 === 'OK' ? '#d1fae5' : '#fee2e2'}; color: ${lastRecord.resultadoDestructivaJig1 === 'OK' ? '#065f46' : '#991b1b'}; border: 1px solid ${lastRecord.resultadoDestructivaJig1 === 'OK' ? '#6ee7b7' : '#fca5a5'}; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">J1: ${lastRecord.resultadoDestructivaJig1}</span>`
-                  : '';
-                
-                const test2 = lastRecord.resultadoDestructivaJig2 
-                  ? `<span style="display: inline-block; padding: 4px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; background-color: ${lastRecord.resultadoDestructivaJig2 === 'OK' ? '#d1fae5' : '#fee2e2'}; color: ${lastRecord.resultadoDestructivaJig2 === 'OK' ? '#065f46' : '#991b1b'}; border: 1px solid ${lastRecord.resultadoDestructivaJig2 === 'OK' ? '#6ee7b7' : '#fca5a5'}; margin-left: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">J2: ${lastRecord.resultadoDestructivaJig2}</span>`
-                  : '';
+      // TABLA SIN GORIKA (solo estado)
+      if (teachWithoutGorika.length > 0) {
+        html += `
+          <div style="margin-bottom: 25px; page-break-inside: avoid;">
+            <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; padding: 14px 18px; font-weight: bold; font-size: 16px; border-left: 6px solid #10b981; margin-bottom: 18px; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.1);">
+              <span style="font-size: 20px; margin-right: 8px;">🎓</span>
+              <span style="vertical-align: middle;">TEACH</span>
+              <span style="background: rgba(255,255,255,0.8); color: #065f46; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 10px; font-weight: 600;">${teachWithoutGorika.length} ensambles</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; border: 2px solid #d1d5db; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); table-layout: fixed;">
+              <thead>
+                <tr style="background: linear-gradient(to bottom, #ecfdf5, #d1fae5);">
+                  <th style="color: #065f46; text-align: left; padding: 14px 10px; font-weight: 800; border-bottom: 3px solid #10b981; text-transform: uppercase; font-size: 9px; width: 22%;">Máquina</th>
+                  <th style="color: #065f46; text-align: left; padding: 14px 10px; font-weight: 800; border-bottom: 3px solid #10b981; text-transform: uppercase; font-size: 9px; width: 18%;">Modelo</th>
+                  <th style="color: #065f46; text-align: left; padding: 14px 10px; font-weight: 800; border-bottom: 3px solid #10b981; text-transform: uppercase; font-size: 9px; width: 14%;">Número</th>
+                  <th style="color: #065f46; text-align: center; padding: 14px 10px; font-weight: 800; border-bottom: 3px solid #10b981; text-transform: uppercase; font-size: 9px; width: 16%;">Estado</th>
+                  <th style="color: #065f46; text-align: left; padding: 14px 10px; font-weight: 800; border-bottom: 3px solid #10b981; text-transform: uppercase; font-size: 9px; width: 15%;">Inicio</th>
+                  <th style="color: #065f46; text-align: left; padding: 14px 10px; font-weight: 800; border-bottom: 3px solid #10b981; text-transform: uppercase; font-size: 9px; width: 15%;">Deadline</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${teachWithoutGorika.map((assembly, idx) => {
+                  const lr = assembly.lastRecord || {};
+                  const estadoGeneral = getEstadoGeneral(lr);
 
-                const testResult = (test1 || test2) ? `${test1} ${test2}` : 'N/A';
-
-                return `
-                  <tr style="background-color: ${teachAssemblies.indexOf(assembly) % 2 === 0 ? '#ffffff' : '#f9fafb'};">
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; width: 6%; overflow: hidden;">
-                      <span style="display: inline-block; padding: 3px 7px; border-radius: 12px; font-size: 8px; font-weight: 700; background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">TEACH</span>
-                    </td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; color: #111827; width: 10%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><strong style="font-size: 10px;">${assembly.maquina}</strong></td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; color: #374151; width: 9%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px;">${assembly.modelo}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-family: monospace; width: 10%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px;">#${assembly.numero}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600; font-size: 10px; width: 11%; overflow: hidden; white-space: nowrap;">${jig1}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; color: #374151; font-weight: 600; font-size: 10px; width: 11%; overflow: hidden; white-space: nowrap;">${jig2}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; width: 15%; overflow: hidden;">${testResult}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 9px; width: 14%; overflow: hidden; white-space: nowrap;">${assembly.fechaInicio || 'N/A'}</td>
-                    <td style="padding: 8px 6px; border-bottom: 1px solid #e5e7eb; color: #dc2626; font-weight: 700; font-size: 9px; width: 14%; overflow: hidden; white-space: nowrap;">${assembly.fechaDeadline || 'N/A'}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
+                  return `
+                    <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f0fdf4'};">
+                      <td style="padding: 12px 10px; border-bottom: 1px solid #d1fae5;"><strong style="font-size: 12px;">${assembly.maquina}</strong></td>
+                      <td style="padding: 12px 10px; border-bottom: 1px solid #d1fae5; font-size: 11px;">${assembly.modelo}</td>
+                      <td style="padding: 12px 10px; border-bottom: 1px solid #d1fae5; font-family: 'Courier New', monospace; font-size: 11px; color: #6b7280;">#${assembly.numero}</td>
+                      <td style="padding: 12px 10px; border-bottom: 1px solid #d1fae5; text-align: center;">${getEstadoBadge(estadoGeneral)}</td>
+                      <td style="padding: 12px 10px; border-bottom: 1px solid #d1fae5; font-size: 10px; color: #374151;">${assembly.fechaInicio || 'N/A'}</td>
+                      <td style="padding: 12px 10px; border-bottom: 1px solid #d1fae5; font-size: 10px; color: #dc2626; font-weight: 700;">${assembly.fechaDeadline || 'N/A'}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
     }
 
     return html;
