@@ -7,6 +7,8 @@ import {
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // ============ COMPONENTE EDITABLE CELL - FUERA DEL COMPONENTE PRINCIPAL ============
 const EditableCell = memo(({ 
@@ -259,6 +261,7 @@ const WeeklyMeetingDetail = () => {
   const [pressRows, setPressRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [engineers, setEngineers] = useState([]);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const DEFAULT_ROWS = 5;
 
@@ -453,6 +456,374 @@ const WeeklyMeetingDetail = () => {
     await setDoc(rowRef, createEmptyRow(rowIndex, area, activeDay));
   }, [weekId, activeDay, createEmptyRow]);
 
+  // Función para generar PDF semanal
+  const generateWeeklyPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      const allDaysData = {};
+      const { startDate, endDate } = getWeekDates(weekId);
+      
+      // Cargar datos de todos los días
+      for (const day of days) {
+        const rowsRef = collection(db, 'weeklyMeetings', weekId, 'days', day.id, 'rows');
+        const q = query(rowsRef, orderBy('rowIndex', 'asc'));
+        const snapshot = await getDocs(q);
+        const allRows = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        allDaysData[day.id] = {
+          assy: allRows.filter(r => r.area === 'ASSY' || r.id.includes('-assy-')).filter(r => r.maquina || r.modelo || r.numero),
+          press: allRows.filter(r => r.area === 'PRESS' || r.area === 'HOT-PRESS' || r.id.includes('-press-')).filter(r => r.maquina || r.modelo || r.numero)
+        };
+      }
+
+      const statusLabels = {
+        '': '-',
+        'pendiente': 'Pendiente',
+        'en_proceso': 'En Proceso',
+        'terminado': 'Terminado',
+        'cancelado': 'Cancelado'
+      };
+
+      const statusTextColors = {
+        '': '#6b7280',
+        'pendiente': '#6b7280',
+        'en_proceso': '#d97706',
+        'terminado': '#16a34a',
+        'cancelado': '#dc2626'
+      };
+
+      const tipoTextColors = {
+        'QC': '#2563eb',
+        'TEACH': '#16a34a',
+        'LASER': '#9333ea'
+      };
+
+      // Generar HTML del reporte
+      let html = `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; max-width: 100%; background: white;">
+          <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 25px; border-radius: 12px;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: 800;">📋 Reporte Semanal</h1>
+            <p style="margin: 10px 0 0; font-size: 18px; opacity: 0.9;">Semana ${weekData?.weekNumber} • ${weekData?.year}</p>
+            <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.8;">${formatDate(startDate)} - ${formatDate(endDate)}</p>
+          </div>
+      `;
+
+      // Iterar por cada día
+      let isFirstDay = true;
+      for (const day of days) {
+        const dayData = allDaysData[day.id];
+        const hasData = (dayData.assy.length > 0 || dayData.press.length > 0);
+        
+        if (!hasData) continue;
+
+        // Cada día en una nueva página (excepto el primero)
+        const pageBreak = isFirstDay ? '' : 'page-break-before: always;';
+        isFirstDay = false;
+
+        html += `
+          <div style="margin-bottom: 30px; ${pageBreak}">
+            <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 12px 18px; border-radius: 10px 10px 0 0;">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 700;">📅 ${day.label}</h2>
+            </div>
+        `;
+
+        // Tabla ASSY
+        if (dayData.assy.length > 0) {
+          html += `
+            <div style="margin-bottom: 15px; page-break-inside: avoid;">
+              <div style="background: #e0f2fe; padding: 10px 15px; border-left: 4px solid #0ea5e9;">
+                <h3 style="margin: 0; font-size: 14px; color: #0369a1; font-weight: 700;">📦 Ensambles (ASSY) - ${dayData.assy.length} registros</h3>
+              </div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
+                <thead>
+                  <tr style="background: #f1f5f9;">
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${dayData.assy.map((row, idx) => `
+                    <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${row.modelo || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-family: monospace;">${row.numero || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        // Tabla PRESS
+        if (dayData.press.length > 0) {
+          html += `
+            <div style="margin-bottom: 15px; page-break-inside: avoid;">
+              <div style="background: #ffedd5; padding: 10px 15px; border-left: 4px solid #f97316;">
+                <h3 style="margin: 0; font-size: 14px; color: #c2410c; font-weight: 700;">⚙️ Prensas (PRESS) - ${dayData.press.length} registros</h3>
+              </div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
+                <thead>
+                  <tr style="background: #fff7ed;">
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${dayData.press.map((row, idx) => `
+                    <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#fffbeb'};">
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${row.modelo || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-family: monospace;">${row.numero || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        html += `</div>`;
+      }
+
+      // Resumen de la semana
+      let totalAssy = 0, totalPress = 0, terminados = 0, enProceso = 0, pendientes = 0;
+      for (const day of days) {
+        const dayData = allDaysData[day.id];
+        totalAssy += dayData.assy.length;
+        totalPress += dayData.press.length;
+        [...dayData.assy, ...dayData.press].forEach(r => {
+          if (r.status === 'terminado') terminados++;
+          else if (r.status === 'en_proceso') enProceso++;
+          else if (r.status === 'pendiente') pendientes++;
+        });
+      }
+
+      html += `
+        <div style="margin-top: 30px; background: #f8fafc; border-radius: 12px; padding: 20px; border: 2px solid #e2e8f0;">
+          <h3 style="margin: 0 0 15px; font-size: 16px; color: #1e293b; font-weight: 700;">📊 Resumen de la Semana</h3>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 120px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #0ea5e9;">${totalAssy}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Ensambles</p>
+            </div>
+            <div style="flex: 1; min-width: 120px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #f97316;">${totalPress}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Prensas</p>
+            </div>
+            <div style="flex: 1; min-width: 120px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #22c55e;">${terminados}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Terminados</p>
+            </div>
+            <div style="flex: 1; min-width: 120px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #eab308;">${enProceso}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">En Proceso</p>
+            </div>
+            <div style="flex: 1; min-width: 120px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #6b7280;">${pendientes}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Pendientes</p>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 25px; color: #9ca3af; font-size: 10px;">
+          Generado el ${new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+      `;
+
+      // Crear PDF con secciones separadas
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 10;
+      let currentY = margin;
+
+      // Función auxiliar para renderizar una sección y agregarla al PDF
+      const addSectionToPDF = async (sectionHtml, isFirst = false) => {
+        const container = document.createElement('div');
+        container.innerHTML = `<div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 15px; background: white;">${sectionHtml}</div>`;
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.width = '794px';
+        document.body.appendChild(container);
+
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        document.body.removeChild(container);
+
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Si no cabe en la página actual, agregar nueva página
+        if (!isFirst && currentY + imgHeight > pageHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, currentY, imgWidth, imgHeight);
+        currentY += imgHeight + 5;
+      };
+
+      // Header
+      const headerHtml = `
+        <div style="text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 25px; border-radius: 12px;">
+          <h1 style="margin: 0; font-size: 28px; font-weight: 800;">📋 Reporte Semanal</h1>
+          <p style="margin: 10px 0 0; font-size: 18px; opacity: 0.9;">Semana ${weekData?.weekNumber} • ${weekData?.year}</p>
+          <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.8;">${formatDate(startDate)} - ${formatDate(endDate)}</p>
+        </div>
+      `;
+      await addSectionToPDF(headerHtml, true);
+
+      // Cada día como sección separada
+      for (const day of days) {
+        const dayData = allDaysData[day.id];
+        const hasData = (dayData.assy.length > 0 || dayData.press.length > 0);
+        if (!hasData) continue;
+
+        let dayHtml = `
+          <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 12px 18px; border-radius: 10px 10px 0 0;">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700;">📅 ${day.label}</h2>
+          </div>
+        `;
+
+        // ASSY
+        if (dayData.assy.length > 0) {
+          dayHtml += `
+            <div style="background: #e0f2fe; padding: 10px 15px; border-left: 4px solid #0ea5e9;">
+              <h3 style="margin: 0; font-size: 14px; color: #0369a1; font-weight: 700;">📦 Ensambles (ASSY) - ${dayData.assy.length} registros</h3>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${dayData.assy.map((row, idx) => `
+                  <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${row.modelo || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-family: monospace;">${row.numero || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+
+        // PRESS
+        if (dayData.press.length > 0) {
+          dayHtml += `
+            <div style="background: #ffedd5; padding: 10px 15px; border-left: 4px solid #f97316; margin-top: 10px;">
+              <h3 style="margin: 0; font-size: 14px; color: #c2410c; font-weight: 700;">⚙️ Prensas (PRESS) - ${dayData.press.length} registros</h3>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
+              <thead>
+                <tr style="background: #fff7ed;">
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${dayData.press.map((row, idx) => `
+                  <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#fffbeb'};">
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${row.modelo || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-family: monospace;">${row.numero || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+
+        await addSectionToPDF(dayHtml);
+      }
+
+      // Resumen
+      const resumenHtml = `
+        <div style="background: #f8fafc; border-radius: 12px; padding: 20px; border: 2px solid #e2e8f0;">
+          <h3 style="margin: 0 0 15px; font-size: 16px; color: #1e293b; font-weight: 700;">📊 Resumen de la Semana</h3>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 100px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #0ea5e9;">${totalAssy}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Ensambles</p>
+            </div>
+            <div style="flex: 1; min-width: 100px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #f97316;">${totalPress}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Prensas</p>
+            </div>
+            <div style="flex: 1; min-width: 100px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #22c55e;">${terminados}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Terminados</p>
+            </div>
+            <div style="flex: 1; min-width: 100px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #eab308;">${enProceso}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">En Proceso</p>
+            </div>
+            <div style="flex: 1; min-width: 100px; background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-size: 24px; font-weight: 800; color: #6b7280;">${pendientes}</p>
+              <p style="margin: 5px 0 0; font-size: 11px; color: #64748b;">Pendientes</p>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 15px; color: #9ca3af; font-size: 10px;">
+          Generado el ${new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </div>
+      `;
+      await addSectionToPDF(resumenHtml);
+
+      pdf.save(`Reporte_Semana_${weekData?.weekNumber}_${weekData?.year}.pdf`);
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert('Error al generar el PDF. Por favor intenta de nuevo.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -492,12 +863,36 @@ const WeeklyMeetingDetail = () => {
                 {formatDate(startDate)} - {formatDate(endDate)}
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-              <span className="text-sm">En vivo</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={generateWeeklyPDF}
+                disabled={isGeneratingPDF}
+                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-sm">Generando...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span className="text-sm font-medium">Reporte</span>
+                  </>
+                )}
+              </button>
+              <div className="flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span className="text-sm">En vivo</span>
+              </div>
             </div>
           </div>
         </div>
