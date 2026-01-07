@@ -14,7 +14,69 @@ const HotPressDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sendingNotification, setSendingNotification] = useState({});
   const navigate = useNavigate();
+
+  // Lista de números de WhatsApp para notificaciones
+  const whatsappNumbers = [
+    '5214271635691@s.whatsapp.net',
+    '5215660548768@s.whatsapp.net'
+  ];
+
+  // Función para enviar notificación de WhatsApp
+  const handleSendNotification = async (e, assembly) => {
+    e.stopPropagation(); // Evitar navegación al hacer click en el botón
+    
+    setSendingNotification(prev => ({ ...prev, [assembly.id]: true }));
+    
+    const lastRecord = assembly.lastRecord || {};
+    const recordData = lastRecord.data || lastRecord;
+    
+    // Calcular porcentaje
+    let porcentaje = recordData.porcentajeObtenido || 0;
+    if (porcentaje === 0 && (recordData.mikomi || recordData.atari || recordData.ajustesExtras)) {
+      let cumplidos = 0;
+      if (recordData.mikomi === 'OK') cumplidos++;
+      if (recordData.atari === 'OK') cumplidos++;
+      if (recordData.ajustesExtras === 'OK') cumplidos++;
+      porcentaje = Math.round((cumplidos / 3) * 100);
+    }
+    
+    // Construir mensaje
+    const nombreIngeniero = userProfile?.name || currentUser?.email || 'Ingeniero';
+    const mensaje = `🔔 *AVISO DE ENSAMBLE - HOT PRESS*\n\n` +
+      `👷 *Enviado por:* ${nombreIngeniero}\n` +
+      `📋 *Tipo:* ${assembly.tipo}\n` +
+      `🔧 *Máquina:* ${assembly.maquina}\n` +
+      `📦 *Modelo:* ${assembly.modelo}\n` +
+      `🔢 *Número:* #${assembly.numero}\n\n` +
+      `📊 *Porcentaje alcanzado:* ${Math.round(porcentaje)}%\n\n` +
+      `⚠️ *Favor de acercarse a revisar el ensamble final.*`;
+    
+    try {
+      // Enviar mensaje a todos los números de la lista
+      for (const number of whatsappNumbers) {
+        await fetch('https://appn8n-evolution-api-evoapicloud.nhpowe.easypanel.host/message/sendText/Uphy', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'A093E716C60D-4EBB-87EF-4A06FA8C8CB8'
+          },
+          body: JSON.stringify({
+            number: number,
+            text: mensaje,
+            delay: 1200
+          })
+        });
+      }
+      alert('✅ Notificación enviada correctamente');
+    } catch (error) {
+      console.error('Error enviando notificación:', error);
+      alert('❌ Error al enviar la notificación');
+    } finally {
+      setSendingNotification(prev => ({ ...prev, [assembly.id]: false }));
+    }
+  };
 
   useEffect(() => {
     loadAssemblies();
@@ -179,6 +241,7 @@ const HotPressDashboard = () => {
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">% Actual</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Comentarios</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Aviso</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fechas</th>
                           </tr>
                         </thead>
@@ -255,6 +318,34 @@ const HotPressDashboard = () => {
                                   <div className="text-xs text-gray-600 truncate" title={recordData.comentarios || 'Sin comentarios'}>
                                     {recordData.comentarios || 'Sin comentarios'}
                                   </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <button
+                                    onClick={(e) => handleSendNotification(e, assembly)}
+                                    disabled={sendingNotification[assembly.id]}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1 ${
+                                      sendingNotification[assembly.id]
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg'
+                                    }`}
+                                  >
+                                    {sendingNotification[assembly.id] ? (
+                                      <>
+                                        <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Enviando...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                        </svg>
+                                        Dar Aviso
+                                      </>
+                                    )}
+                                  </button>
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap">
                                   <div className="text-xs text-gray-700 font-medium">
@@ -342,6 +433,35 @@ const HotPressDashboard = () => {
                               </div>
                             </div>
 
+                            <div className="flex justify-center mb-3">
+                              <button
+                                onClick={(e) => handleSendNotification(e, assembly)}
+                                disabled={sendingNotification[assembly.id]}
+                                className={`px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 w-full justify-center ${
+                                  sendingNotification[assembly.id]
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg'
+                                }`}
+                              >
+                                {sendingNotification[assembly.id] ? (
+                                  <>
+                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Enviando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                    </svg>
+                                    Dar Aviso
+                                  </>
+                                )}
+                              </button>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
                               <div>
                                 <p className="text-xs text-gray-500 font-medium">Inicio</p>
@@ -392,6 +512,7 @@ const HotPressDashboard = () => {
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">% Actual</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Comentarios</th>
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Aviso</th>
                             <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fechas</th>
                           </tr>
                         </thead>
@@ -459,6 +580,34 @@ const HotPressDashboard = () => {
                                   <div className="text-xs text-gray-600 truncate" title={recordData.comentarios || 'Sin comentarios'}>
                                     {recordData.comentarios || 'Sin comentarios'}
                                   </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <button
+                                    onClick={(e) => handleSendNotification(e, assembly)}
+                                    disabled={sendingNotification[assembly.id]}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 flex items-center gap-1 ${
+                                      sendingNotification[assembly.id]
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg'
+                                    }`}
+                                  >
+                                    {sendingNotification[assembly.id] ? (
+                                      <>
+                                        <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Enviando...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                        </svg>
+                                        Dar Aviso
+                                      </>
+                                    )}
+                                  </button>
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap">
                                   <div className="text-xs text-gray-700 font-medium">
@@ -535,6 +684,35 @@ const HotPressDashboard = () => {
                                   style={{ width: `${Math.min(porcentaje, 100)}%` }}
                                 ></div>
                               </div>
+                            </div>
+
+                            <div className="flex justify-center mb-3">
+                              <button
+                                onClick={(e) => handleSendNotification(e, assembly)}
+                                disabled={sendingNotification[assembly.id]}
+                                className={`px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2 w-full justify-center ${
+                                  sendingNotification[assembly.id]
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg'
+                                }`}
+                              >
+                                {sendingNotification[assembly.id] ? (
+                                  <>
+                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Enviando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                    </svg>
+                                    Dar Aviso
+                                  </>
+                                )}
+                              </button>
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
