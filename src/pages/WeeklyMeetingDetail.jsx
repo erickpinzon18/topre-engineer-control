@@ -409,15 +409,14 @@ const WeeklyMeetingDetail = () => {
   const loadEngineers = async () => {
     try {
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('type', '==', 'ing'));
-      const querySnapshot = await getDocs(q);
-      const engineersList = querySnapshot.docs.map(doc => ({
+      const querySnapshot = await getDocs(usersRef);
+      const usersList = querySnapshot.docs.map(doc => ({
         id: doc.id,
         name: doc.data().name || doc.data().email
       }));
-      setEngineers(engineersList);
+      setEngineers(usersList);
     } catch (error) {
-      console.error('Error cargando ingenieros:', error);
+      console.error('Error cargando usuarios:', error);
     }
   };
 
