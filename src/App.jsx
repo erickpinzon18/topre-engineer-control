@@ -13,6 +13,7 @@ import HotPressDetail from './pages/HotPressDetail';
 import HotPressView from './pages/HotPressView';
 import WeeklyMeetings from './pages/WeeklyMeetings';
 import WeeklyMeetingDetail from './pages/WeeklyMeetingDetail';
+import DailyChecklist from './pages/DailyChecklist';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -38,6 +39,14 @@ function App() {
             element={
               <ProtectedRoute requireEngineer={true} allowedSections={['assy']}>
                 <AssemblyDetail />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/engineer/assy/checklist" 
+            element={
+              <ProtectedRoute requireEngineer={true} allowedSections={['assy']}>
+                <DailyChecklist />
               </ProtectedRoute>
             } 
           />
