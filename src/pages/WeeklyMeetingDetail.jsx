@@ -103,6 +103,32 @@ const EditableCell = memo(({
     );
   }
 
+  if (type === 'textarea') {
+    return (
+      <textarea
+        ref={inputRef}
+        value={localValue}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            setLocalValue(initialValue || '');
+            isEditingRef.current = false;
+            onUpdate(rowId, cellName, initialValue || '', 'unlock');
+          }
+        }}
+        rows={2}
+        className={`w-full px-2 py-1.5 text-sm border rounded transition-all resize-none ${
+          isEditingRef.current 
+            ? 'border-indigo-500 ring-2 ring-indigo-200 bg-indigo-50' 
+            : 'border-gray-300 hover:border-gray-400'
+        } ${className}`}
+        placeholder="-"
+      />
+    );
+  }
+
   return (
     <input
       ref={inputRef}
@@ -149,12 +175,12 @@ const MeetingTable = memo(({
           <tr className="bg-gray-100 border-b-2 border-gray-300">
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-8 border-r border-gray-200">#</th>
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-20 border-r border-gray-200">Tipo</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-28 border-r border-gray-200">Máquina</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-24 border-r border-gray-200">Modelo</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-24 border-r border-gray-200">Número</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-28 border-r border-gray-200">Status</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Responsable</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase min-w-[140px] border-r border-gray-200">Comentarios</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-36 border-r border-gray-200">Máquina</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Modelo</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-36 border-r border-gray-200">Número</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Status</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-44 border-r border-gray-200">Responsable</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase min-w-[120px] border-r border-gray-200">Comentarios</th>
             <th className="px-2 py-2 text-center text-xs font-bold text-gray-600 uppercase w-10">🗑️</th>
           </tr>
         </thead>
@@ -216,6 +242,7 @@ const MeetingTable = memo(({
               <td className="px-1 py-1 border-r border-gray-200">
                 <EditableCell 
                   rowId={row.id} cellName="comentarios" initialValue={row.comentarios}
+                  type="textarea"
                   lock={row.locks?.comentarios} currentUserId={currentUserId}
                   onUpdate={onCellUpdate}
                 />
