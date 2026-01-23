@@ -43,6 +43,8 @@ const PhotoUploader = ({ userId, assemblyId, photos = [], onPhotosChange, disabl
         
         // Convertir a blob con 50% de calidad
         canvas.toBlob((blob) => {
+          // Liberar memoria de la imagen original
+          URL.revokeObjectURL(img.src);
           resolve(blob);
         }, 'image/jpeg', 0.5);
       };
@@ -54,6 +56,12 @@ const PhotoUploader = ({ userId, assemblyId, photos = [], onPhotosChange, disabl
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
+
+    if (files.length > 10) {
+      alert('Por favor selecciona un máximo de 10 fotos a la vez para asegurar una carga rápida.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     setUploading(true);
     setUploadProgress(0);
@@ -178,7 +186,7 @@ const PhotoUploader = ({ userId, assemblyId, photos = [], onPhotosChange, disabl
             <p className="mt-2 text-sm text-gray-600">
               <span className="font-semibold text-sky-600">Toca para subir fotos</span>
             </p>
-            <p className="text-xs text-gray-500">PNG, JPG hasta 2MB cada una</p>
+            <p className="text-xs text-gray-500">PNG, JPG (Máx. 10 fotos por vez)</p>
           </>
         )}
       </div>
