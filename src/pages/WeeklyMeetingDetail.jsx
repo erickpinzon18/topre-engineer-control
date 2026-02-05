@@ -174,7 +174,7 @@ const MeetingTable = memo(({
         <thead>
           <tr className="bg-gray-100 border-b-2 border-gray-300">
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-6 border-r border-gray-200">#</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-16 border-r border-gray-200">Tipo</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Tipo</th>
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-24 border-r border-gray-200">Máquina</th>
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-20 border-r border-gray-200">Modelo</th>
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-36 border-r border-gray-200">Número</th>
