@@ -173,15 +173,16 @@ const MeetingTable = memo(({
       <table className="min-w-full border-collapse">
         <thead>
           <tr className="bg-gray-100 border-b-2 border-gray-300">
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-8 border-r border-gray-200">#</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-20 border-r border-gray-200">Tipo</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-36 border-r border-gray-200">Máquina</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Modelo</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-6 border-r border-gray-200">#</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-16 border-r border-gray-200">Tipo</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-24 border-r border-gray-200">Máquina</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-20 border-r border-gray-200">Modelo</th>
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-36 border-r border-gray-200">Número</th>
             <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-32 border-r border-gray-200">Status</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-44 border-r border-gray-200">Responsable</th>
-            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase min-w-[120px] border-r border-gray-200">Comentarios</th>
-            <th className="px-2 py-2 text-center text-xs font-bold text-gray-600 uppercase w-10">🗑️</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase w-36 border-r border-gray-200">Responsable</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-gray-600 uppercase min-w-[150px] border-r border-gray-200">Comentarios</th>
+            <th className="px-2 py-2 text-left text-xs font-bold text-red-600 uppercase w-28 border-r border-gray-200 bg-red-50">📅 Fecha Límite</th>
+            <th className="px-2 py-2 text-center text-xs font-bold text-gray-600 uppercase w-8">🗑️</th>
           </tr>
         </thead>
         <tbody>
@@ -245,6 +246,26 @@ const MeetingTable = memo(({
                   type="textarea"
                   lock={row.locks?.comentarios} currentUserId={currentUserId}
                   onUpdate={onCellUpdate}
+                  className="text-xs"
+                />
+              </td>
+              <td className="px-1 py-1 border-r border-gray-200">
+                <input
+                  type="date"
+                  value={row.fechaLimite || ''}
+                  onChange={(e) => onCellUpdate(row.id, 'fechaLimite', e.target.value, 'save')}
+                  className={`w-full px-1 py-1 text-xs border rounded font-semibold ${
+                    !row.fechaLimite ? 'border-gray-300 bg-white text-gray-500' :
+                    (() => {
+                      const today = new Date();
+                      today.setHours(0,0,0,0);
+                      const deadline = new Date(row.fechaLimite + 'T00:00:00');
+                      const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+                      if (diffDays <= 0) return 'border-red-500 bg-red-100 text-red-700';
+                      if (diffDays <= 2) return 'border-orange-500 bg-orange-100 text-orange-700';
+                      return 'border-green-500 bg-green-100 text-green-700';
+                    })()
+                  }`}
                 />
               </td>
               <td className="px-1 py-1 text-center">
@@ -312,13 +333,23 @@ const WeeklyMeetingDetail = () => {
   const tipoOptionsAssy = [
     { value: '', label: '-' },
     { value: 'QC', label: 'QC' },
-    { value: 'TEACH', label: 'TEACH' }
+    { value: 'TEACH', label: 'TEACH' },
+    { value: 'HVT', label: 'HVT' },
+    { value: 'LT', label: 'LT' },
+    { value: 'AUTO', label: 'AUTO' },
+    { value: 'TALACHA', label: 'TALACHA' },
+    { value: 'MODIFICACIÓN', label: 'MODIFICACIÓN' }
   ];
 
   const tipoOptionsPress = [
     { value: '', label: '-' },
     { value: 'QC', label: 'QC' },
-    { value: 'LASER', label: 'LASER' }
+    { value: 'LASER', label: 'LASER' },
+    { value: 'HVT', label: 'HVT' },
+    { value: 'LT', label: 'LT' },
+    { value: 'AUTO', label: 'AUTO' },
+    { value: 'TALACHA', label: 'TALACHA' },
+    { value: 'MODIFICACIÓN', label: 'MODIFICACIÓN' }
   ];
 
   const statusColors = {
@@ -364,6 +395,7 @@ const WeeklyMeetingDetail = () => {
     status: '',
     comentarios: '',
     responsable: '',
+    fechaLimite: '',
     updatedAt: null,
     locks: {}
   }), []);
@@ -563,17 +595,29 @@ const WeeklyMeetingDetail = () => {
               <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
                 <thead>
                   <tr style="background: #f1f5f9;">
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 7%;">Tipo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Máquina</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Modelo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Número</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Status</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Responsable</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Comentarios</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 15%; background: #fef2f2; color: #dc2626;">📅 Fecha Límite</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${dayData.assy.map((row, idx) => `
+                  ${dayData.assy.map((row, idx) => {
+                    const getFechaColor = (fecha) => {
+                      if (!fecha) return { bg: '#ffffff', color: '#6b7280' };
+                      const today = new Date(); today.setHours(0,0,0,0);
+                      const deadline = new Date(fecha + 'T00:00:00');
+                      const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+                      if (diffDays <= 0) return { bg: '#fef2f2', color: '#dc2626' };
+                      if (diffDays <= 2) return { bg: '#fff7ed', color: '#ea580c' };
+                      return { bg: '#f0fdf4', color: '#16a34a' };
+                    };
+                    const fechaStyle = getFechaColor(row.fechaLimite);
+                    return `
                     <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
@@ -582,8 +626,9 @@ const WeeklyMeetingDetail = () => {
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; font-weight: 700; background: ${fechaStyle.bg}; color: ${fechaStyle.color};">${row.fechaLimite || '-'}</td>
                     </tr>
-                  `).join('')}
+                  `}).join('')}
                 </tbody>
               </table>
             </div>
@@ -600,17 +645,29 @@ const WeeklyMeetingDetail = () => {
               <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
                 <thead>
                   <tr style="background: #fff7ed;">
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
-                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 7%;">Tipo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Máquina</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Modelo</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Número</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Status</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Responsable</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Comentarios</th>
+                    <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 15%; background: #fef2f2; color: #dc2626;">📅 Fecha Límite</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${dayData.press.map((row, idx) => `
+                  ${dayData.press.map((row, idx) => {
+                    const getFechaColor = (fecha) => {
+                      if (!fecha) return { bg: '#ffffff', color: '#6b7280' };
+                      const today = new Date(); today.setHours(0,0,0,0);
+                      const deadline = new Date(fecha + 'T00:00:00');
+                      const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+                      if (diffDays <= 0) return { bg: '#fef2f2', color: '#dc2626' };
+                      if (diffDays <= 2) return { bg: '#fff7ed', color: '#ea580c' };
+                      return { bg: '#f0fdf4', color: '#16a34a' };
+                    };
+                    const fechaStyle = getFechaColor(row.fechaLimite);
+                    return `
                     <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#fffbeb'};">
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
@@ -619,8 +676,9 @@ const WeeklyMeetingDetail = () => {
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
                       <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                      <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; font-weight: 700; background: ${fechaStyle.bg}; color: ${fechaStyle.color};">${row.fechaLimite || '-'}</td>
                     </tr>
-                  `).join('')}
+                  `}).join('')}
                 </tbody>
               </table>
             </div>
@@ -744,17 +802,29 @@ const WeeklyMeetingDetail = () => {
             <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
               <thead>
                 <tr style="background: #f1f5f9;">
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 7%;">Tipo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Máquina</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Modelo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Número</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Status</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Responsable</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Comentarios</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 15%; background: #fef2f2; color: #dc2626;">📅 Fecha Límite</th>
                 </tr>
               </thead>
               <tbody>
-                ${dayData.assy.map((row, idx) => `
+                ${dayData.assy.map((row, idx) => {
+                  const getFechaColor = (fecha) => {
+                    if (!fecha) return { bg: '#ffffff', color: '#6b7280' };
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const deadline = new Date(fecha + 'T00:00:00');
+                    const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 0) return { bg: '#fef2f2', color: '#dc2626' };
+                    if (diffDays <= 2) return { bg: '#fff7ed', color: '#ea580c' };
+                    return { bg: '#f0fdf4', color: '#16a34a' };
+                  };
+                  const fechaStyle = getFechaColor(row.fechaLimite);
+                  return `
                   <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'};">
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
@@ -763,8 +833,9 @@ const WeeklyMeetingDetail = () => {
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; font-weight: 700; background: ${fechaStyle.bg}; color: ${fechaStyle.color};">${row.fechaLimite || '-'}</td>
                   </tr>
-                `).join('')}
+                `}).join('')}
               </tbody>
             </table>
           `;
@@ -779,17 +850,29 @@ const WeeklyMeetingDetail = () => {
             <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb;">
               <thead>
                 <tr style="background: #fff7ed;">
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 8%;">Tipo</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 16%;">Máquina</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Modelo</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Número</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Status</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Responsable</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 24%;">Comentarios</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 7%;">Tipo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 14%;">Máquina</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Modelo</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Número</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 10%;">Status</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 12%;">Responsable</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 20%;">Comentarios</th>
+                  <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; width: 15%; background: #fef2f2; color: #dc2626;">📅 Fecha Límite</th>
                 </tr>
               </thead>
               <tbody>
-                ${dayData.press.map((row, idx) => `
+                ${dayData.press.map((row, idx) => {
+                  const getFechaColor = (fecha) => {
+                    if (!fecha) return { bg: '#ffffff', color: '#6b7280' };
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const deadline = new Date(fecha + 'T00:00:00');
+                    const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 0) return { bg: '#fef2f2', color: '#dc2626' };
+                    if (diffDays <= 2) return { bg: '#fff7ed', color: '#ea580c' };
+                    return { bg: '#f0fdf4', color: '#16a34a' };
+                  };
+                  const fechaStyle = getFechaColor(row.fechaLimite);
+                  return `
                   <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#fffbeb'};">
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${tipoTextColors[row.tipo] || '#374151'}; font-weight: 700;">${row.tipo || '-'}</td>
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: 600;">${row.maquina || '-'}</td>
@@ -798,8 +881,9 @@ const WeeklyMeetingDetail = () => {
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; color: ${statusTextColors[row.status || '']}; font-weight: 600;">${statusLabels[row.status] || '-'}</td>
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${row.responsable || '-'}</td>
                     <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; color: #6b7280;">${row.comentarios || '-'}</td>
+                    <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px; font-weight: 700; background: ${fechaStyle.bg}; color: ${fechaStyle.color};">${row.fechaLimite || '-'}</td>
                   </tr>
-                `).join('')}
+                `}).join('')}
               </tbody>
             </table>
           `;
