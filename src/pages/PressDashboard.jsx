@@ -270,7 +270,7 @@ const PressDashboard = () => {
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">% Actual</th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Estado</th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Comentarios</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Aviso</th>
+                        {/* <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Aviso</th> */}
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fechas</th>
                       </tr>
                     </thead>
@@ -351,7 +351,7 @@ const PressDashboard = () => {
                                 {recordData.comentarios || 'Sin comentarios'}
                               </div>
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            {/* <td className="px-4 py-3 whitespace-nowrap">
                               <button
                                 onClick={(e) => handleSendNotification(e, assembly)}
                                 disabled={sendingNotification[assembly.id]}
@@ -378,7 +378,7 @@ const PressDashboard = () => {
                                   </>
                                 )}
                               </button>
-                            </td>
+                            </td> */}
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="text-xs text-gray-700 font-medium">
                                 Inicio: {assembly.fechaInicio || new Date(assembly.createdAt?.seconds * 1000).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })}
