@@ -15,10 +15,12 @@ import WeeklyMeetings from './pages/WeeklyMeetings';
 import WeeklyMeetingDetail from './pages/WeeklyMeetingDetail';
 import DailyChecklist from './pages/DailyChecklist';
 import ProtectedRoute from './components/ProtectedRoute';
+import PaymentBlocker from './components/PaymentBlocker';
 
 function App() {
   return (
     <Router>
+      <PaymentBlocker />
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
